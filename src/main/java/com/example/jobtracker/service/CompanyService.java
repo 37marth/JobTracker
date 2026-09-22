@@ -6,6 +6,8 @@ import com.example.jobtracker.repository.CompanyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class CompanyService {
     @Autowired
@@ -17,5 +19,10 @@ public class CompanyService {
           Company target =companyRequestDto.toEntity();
 //        2.그 변수를 companyRepository.save(...)에 전달하고, save()의 반환값을 return하기.
           return companyRepository.save(target);
+    }
+
+    public List<Company> index() {
+        List<Company> companies  =companyRepository.findAll();
+        return companies;
     }
 }
