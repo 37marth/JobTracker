@@ -5,8 +5,11 @@ import com.example.jobtracker.entity.Company;
 import com.example.jobtracker.entity.JobApplication;
 import com.example.jobtracker.repository.CompanyRepository;
 import com.example.jobtracker.repository.JobApplicationRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class JobApplicationService {
@@ -25,5 +28,18 @@ public class JobApplicationService {
         JobApplication jobApplication = JobApplication.createJobApplication(company,jobApplicationRequestDto);
         // 4. 지원내역을 저장하고 그 결과를 반환한다.
         return jobApplicationRepository.save(jobApplication);
+    }
+
+    public List<JobApplication> index(Long companyId) {
+        return jobApplicationRepository.findByCompanyId(companyId);
+    }
+
+    public JobApplication update(Long id, JobApplicationRequestDto jobApplicationRequestDto) {
+        JobApplication target = jobApplicationRepository.findById(id).orElse(null);
+        if (target != null) {
+            target.patch(jobApplicationRequestDto);
+            return jobApplicationRepository.save(target);
+        }
+        return null;
     }
 }

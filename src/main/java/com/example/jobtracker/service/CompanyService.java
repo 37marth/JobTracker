@@ -22,7 +22,16 @@ public class CompanyService {
     }
 
     public List<Company> index() {
-        List<Company> companies  =companyRepository.findAll();
+        List<Company> companies = companyRepository.findAll();
         return companies;
+    }
+
+    public Company update(Long id, CompanyRequestDto companyRequestDto) {
+        Company target = companyRepository.findById(id).orElse(null);
+        if (target != null) {
+            target.patch(companyRequestDto);
+            return companyRepository.save(target);
+        }
+        return null;
     }
 }

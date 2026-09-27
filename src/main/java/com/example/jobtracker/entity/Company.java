@@ -1,5 +1,6 @@
 package com.example.jobtracker.entity;
 
+import com.example.jobtracker.dto.CompanyRequestDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,4 +20,9 @@ public class Company {
     private String name;
     @Column
     private String location;
+
+    public void patch(CompanyRequestDto companyRequestDto) {
+        this.name = companyRequestDto.getName();
+        this.location = companyRequestDto.getLocation();
+    }
 }

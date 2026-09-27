@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Getter
@@ -24,7 +24,7 @@ public class JobApplication {
     private String jobTitle;//지원한 직무
 
     @Column
-    private LocalDateTime appliedAt;//지원 날짜+시간
+    private LocalDate appliedAt;//지원 날짜
 
     @Column
     private String memo;//남길 메모
@@ -35,5 +35,11 @@ public class JobApplication {
                 jobApplicationRequestDto.getJobTitle(),
                 jobApplicationRequestDto.getAppliedAt(),
                 jobApplicationRequestDto.getMemo());
+    }
+
+    public void patch(JobApplicationRequestDto jobApplicationRequestDto) {
+        this.jobTitle = jobApplicationRequestDto.getJobTitle();
+        this.appliedAt = jobApplicationRequestDto.getAppliedAt();
+        this.memo = jobApplicationRequestDto.getMemo();
     }
 }

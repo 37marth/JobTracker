@@ -18,6 +18,11 @@ public class CompanyApiController {
     @Autowired
     private CompanyService companyService;
 
+    @GetMapping("/companies")
+    public ResponseEntity<List<Company>> indexCompanies() {
+        return ResponseEntity.status(HttpStatus.OK).body(companyService.index());
+    }
+
 
     @PostMapping("/companies")
     public ResponseEntity<Company> createCompany(@Valid @RequestBody CompanyRequestDto companyRequestDto) {
@@ -25,8 +30,18 @@ public class CompanyApiController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCompany);
     }
 
-    @GetMapping("/companies")
-    public ResponseEntity<List<Company>> indexCompanies() {
-        return ResponseEntity.status(HttpStatus.OK).body(companyService.index());
+    @PatchMapping("/companies/{id}")
+    public ResponseEntity<Company> update(@PathVariable Long id, @Valid @RequestBody CompanyRequestDto companyRequestDto) {
+
+        Company company = companyService.update(id,companyRequestDto);
+        // 없으면 404응답
+        if (company == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(company);
     }
+
+
+
 }
