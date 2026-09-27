@@ -1,12 +1,16 @@
 package com.example.jobtracker.service;
 
 import com.example.jobtracker.dto.CompanyRequestDto;
+import com.example.jobtracker.dto.CompanyResponseDto;
 import com.example.jobtracker.entity.Company;
 import com.example.jobtracker.repository.CompanyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.example.jobtracker.dto.CompanyResponseDto.createCompanyDto;
 
 @Service
 public class CompanyService {
@@ -14,24 +18,36 @@ public class CompanyService {
     private CompanyRepository companyRepository;
 
 
-    public Company create(CompanyRequestDto companyRequestDto) {
-//        1.dto.toEntity()가 반환한 객체를 Company 타입 변수에 담기.
+    public CompanyResponseDto create(CompanyRequestDto companyRequestDto) {
+
           Company target =companyRequestDto.toEntity();
-//        2.그 변수를 companyRepository.save(...)에 전달하고, save()의 반환값을 return하기.
-          return companyRepository.save(target);
+          Company savedCompany = companyRepository.save(target);
+          return CompanyResponseDto.createCompanyDto(savedCompany);
     }
 
-    public List<Company> index() {
+    public List<CompanyResponseDto> index() {
         List<Company> companies = companyRepository.findAll();
-        return companies;
+        return companies.stream()
+                .map(company -> createCompanyDto(company))
+                .collect(Collectors.toList());
     }
 
-    public Company update(Long id, CompanyRequestDto companyRequestDto) {
+    public CompanyResponseDto update(Long id, CompanyRequestDto companyRequestDto) {
         Company target = companyRepository.findById(id).orElse(null);
         if (target != null) {
             target.patch(companyRequestDto);
-            return companyRepository.save(target);
+            Company savedCompany = companyRepository.save(target);
+            return CompanyResponseDto.createCompanyDto(savedCompany);
         }
         return null;
+    }
+
+    public Company delete(Long id) {
+
+        Company target = companyRepository.findById(id).orElse(null);
+        if (target != null) {
+            companyRepository.delete(target);
+        }
+        return target;
     }
 }

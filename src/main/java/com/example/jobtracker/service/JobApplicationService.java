@@ -42,4 +42,13 @@ public class JobApplicationService {
         }
         return null;
     }
+
+    public JobApplication delete(Long id) {
+
+        JobApplication target = jobApplicationRepository.findById(id).orElse(null);
+        if (target != null) {
+            jobApplicationRepository.delete(target);
+        }
+        return target;
+    }
 }

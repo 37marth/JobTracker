@@ -43,4 +43,16 @@ public class JobApplicationApiController {
         // 4. 수정된 지원내역을 200 OK로 응답한다.
         return ResponseEntity.status(HttpStatus.OK).body(jobApplication);
     }
+
+    @DeleteMapping("/job-applications/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        // 1. 서비스에 이 ID의 지원내역 삭제를 요청한다.
+        JobApplication jobApplication = jobApplicationService.delete(id);
+        // 2. 삭제할 지원내역이 없으면 404를 응답한다.
+        if (jobApplication == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        // 3. 삭제했으면 204를 응답한다.
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 }
