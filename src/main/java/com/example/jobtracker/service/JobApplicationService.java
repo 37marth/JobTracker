@@ -1,15 +1,19 @@
 package com.example.jobtracker.service;
 
 import com.example.jobtracker.dto.JobApplicationRequestDto;
+import com.example.jobtracker.dto.JobApplicationResponseDto;
 import com.example.jobtracker.entity.Company;
 import com.example.jobtracker.entity.JobApplication;
 import com.example.jobtracker.repository.CompanyRepository;
 import com.example.jobtracker.repository.JobApplicationRepository;
-import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.example.jobtracker.dto.JobApplicationResponseDto.createJobApplicationDto;
 
 @Service
 public class JobApplicationService {
@@ -19,36 +23,43 @@ public class JobApplicationService {
     private CompanyRepository companyRepository;
 
 
-    public JobApplication create(Long companyId, JobApplicationRequestDto jobApplicationRequestDto) {
+    public JobApplicationResponseDto create(Long companyId, JobApplicationRequestDto jobApplicationRequestDto) {
         // 1. companyId로 기존 회사를 조회한다.
         Company company = companyRepository.findById(companyId)
                 // 2. 회사가 없으면 저장을 중단하고 오류로 처리한다.
                 .orElseThrow(()->new IllegalArgumentException("조회 실패! 등록되지 않은 회사입니다."));
         // 3. 찾은 회사와 DTO의 값으로 지원내역 객체를 만든다.
         JobApplication jobApplication = JobApplication.createJobApplication(company,jobApplicationRequestDto);
+        jobApplicationRepository.save(jobApplication);
+        JobApplicationResponseDto jobApplicationResponseDto = createJobApplicationDto(jobApplication);
         // 4. 지원내역을 저장하고 그 결과를 반환한다.
-        return jobApplicationRepository.save(jobApplication);
+        return jobApplicationResponseDto;
     }
 
-    public List<JobApplication> index(Long companyId) {
-        return jobApplicationRepository.findByCompanyId(companyId);
+    public List<JobApplicationResponseDto> index(Long companyId) {
+        return jobApplicationRepository.findByCompanyId(companyId)
+                .stream()
+                .map(jobApplication -> createJobApplicationDto(jobApplication))
+                .collect(Collectors.toList());
     }
 
-    public JobApplication update(Long id, JobApplicationRequestDto jobApplicationRequestDto) {
+    public JobApplicationResponseDto update(Long id, JobApplicationRequestDto jobApplicationRequestDto) {
         JobApplication target = jobApplicationRepository.findById(id).orElse(null);
         if (target != null) {
             target.patch(jobApplicationRequestDto);
-            return jobApplicationRepository.save(target);
+            jobApplicationRepository.save(target);
+            JobApplicationResponseDto jobApplicationResponseDto = createJobApplicationDto(target);
+            return jobApplicationResponseDto;
         }
         return null;
     }
 
     public JobApplication delete(Long id) {
-
         JobApplication target = jobApplicationRepository.findById(id).orElse(null);
-        if (target != null) {
-            jobApplicationRepository.delete(target);
+        if (target == null) {
+            return null;
         }
+        jobApplicationRepository.delete(target);
         return target;
     }
 }

@@ -12,13 +12,13 @@ HTTP 응답 ← Controller ← Service ← 조회·저장 결과
 | 구성 | 역할 | 클래스 |
 | --- | --- | --- |
 | Controller | 요청을 받아 서비스를 호출하고 HTTP 응답 반환 | CompanyApiController, JobApplicationApiController |
-| Service | 회사·지원내역 조회·등록·수정·삭제 처리, 회사 응답 DTO 변환 | CompanyService, JobApplicationService |
+| Service | 회사·지원내역 조회·등록·수정·삭제 처리, 응답 DTO 변환 | CompanyService, JobApplicationService |
 | Repository | 엔티티 저장·조회·삭제 | CompanyRepository, JobApplicationRepository |
 | Entity | 저장할 데이터와 연관관계 표현 | Company, JobApplication |
 | 요청 DTO | 요청 본문의 입력값 전달 | CompanyRequestDto, JobApplicationRequestDto |
-| 응답 DTO | 회사 ID·이름·위치를 응답에 전달 | CompanyResponseDto |
+| 응답 DTO | 회사·지원내역에서 응답에 필요한 값 전달 | CompanyResponseDto, JobApplicationResponseDto |
 
-응답 DTO 변환은 Service에서 처리하고, Controller는 반환된 DTO에 HTTP 상태를 붙여 응답합니다. 현재 회사 등록·조회·수정에 적용했으며, 지원내역 응답 DTO는 다음 작업입니다. Repository는 계속 엔티티를 조회·저장합니다.
+응답 DTO 변환은 Service에서 처리하고, Controller는 반환된 DTO에 HTTP 상태를 붙여 응답합니다. 회사와 지원내역의 등록·조회·수정에 적용했습니다. Repository는 계속 엔티티를 조회·저장합니다.
 
 `HomeController`는 `home/home.mustache`를 반환합니다. 회사·지원내역 화면은 미구현이며, Mustache와 JavaScript의 `fetch()`로 기존 API에 연결할 계획입니다.
 
@@ -56,15 +56,17 @@ HTTP 응답 ← Controller ← Service ← 조회·저장 결과
 2. Service가 `CompanyRepository.findById(companyId)`로 기존 회사를 조회합니다.
 3. 회사가 없으면 `IllegalArgumentException`을 발생시켜 저장을 중단합니다.
 4. `JobApplication.createJobApplication(company, dto)`로 지원내역 객체를 만듭니다.
-5. `JobApplicationRepository.save()`의 결과를 201 응답 본문에 담습니다.
+5. `JobApplicationRepository.save()`로 저장한 뒤 `JobApplicationResponseDto.createJobApplicationDto()`로 변환해 201 응답 본문에 담습니다.
 
 요청 DTO에는 지원내역 ID와 회사 ID가 없습니다. 회사는 주소의 ID로 조회한 객체를 사용하고, 새 지원내역의 ID는 null로 생성한 뒤 DB에서 부여받습니다.
 
-지원내역 응답에는 아직 엔티티를 직접 사용합니다. 지원내역 등록·조회와 수정 후 재조회를 확인했습니다.
+지원내역 응답 DTO는 `id`, `companyId`, `jobTitle`, `appliedAt`, `memo`를 담습니다. `getCompany().getId()`로 연결된 회사의 ID를 가져오며 회사 객체 전체는 응답에 포함하지 않습니다. DTO 적용 후 등록·조회·수정과 수정 후 재조회를 확인했습니다.
 
 ### 회사별 지원내역 조회
 
 `GET /api/companies/{companyId}/job-applications`는 서비스의 `index(companyId)`를 거쳐 `findByCompanyId(companyId)`를 호출합니다. Spring Data JPA가 메서드 이름의 `CompanyId`를 `JobApplication.company.id`로 해석해 해당 회사의 지원내역만 조회합니다. 회사 존재 여부는 별도로 검사하지 않아, 없는 회사 ID도 빈 목록을 반환합니다.
+
+조회한 엔티티 목록은 서비스에서 `stream().map(...).collect(Collectors.toList())`로 응답 DTO 목록으로 변환합니다.
 
 ### 회사·지원내역 수정
 
@@ -74,7 +76,7 @@ HTTP 응답 ← Controller ← Service ← 조회·저장 결과
 2. Service가 `findById(id)`로 기존 엔티티를 찾습니다.
 3. 대상이 있으면 엔티티의 `patch(dto)`로 값을 바꾸고 `save()`합니다.
 4. 대상이 없으면 null을 반환하고, Controller가 본문 없는 404로 응답합니다.
-5. 회사는 Service에서 저장 결과를 `CompanyResponseDto`로 변환하고, 지원내역은 아직 엔티티를 반환합니다. Controller는 해당 결과를 200 응답에 담습니다.
+5. Service에서 회사를 `CompanyResponseDto`, 지원내역을 `JobApplicationResponseDto`로 변환합니다. Controller는 해당 결과를 200 응답에 담습니다.
 
 회사는 이름·위치, 지원내역은 직무·날짜·메모를 변경합니다. 수정할 때 기존 ID와 회사 연결은 유지합니다. 수정 요청 DTO는 등록용과 같으며, 생략한 값을 자동으로 기존 값으로 유지하지 않습니다. 선택 필드인 위치·메모는 생략하거나 null로 보내면 비워집니다.
 
@@ -87,7 +89,9 @@ HTTP 응답 ← Controller ← Service ← 조회·저장 결과
 3. 대상이 없으면 null을 반환합니다.
 4. Controller는 null이면 404, 삭제에 성공하면 204를 응답합니다. 응답 본문이 없으므로 반환형은 `ResponseEntity<Void>`입니다.
 
-현재 회사 삭제에는 cascade 설정이 없습니다. 지원내역이 남아 있는 회사는 DB의 참조 관계 때문에 삭제가 거절될 수 있습니다. 지원내역 삭제 후 목록에서 사라지고 회사가 유지되는 것은 확인했지만, 회사 삭제와 DELETE의 204·404 상태 확인은 남아 있습니다.
+삭제 결과로 반환하는 엔티티는 Controller가 대상 존재 여부를 판단하는 데 사용하며 응답 본문에 담지 않습니다. 따라서 삭제에는 응답 DTO 변환이 필요하지 않습니다.
+
+현재 회사 삭제에는 cascade 설정이 없습니다. 지원내역이 남아 있는 회사는 DB의 참조 관계 때문에 삭제가 거절될 수 있습니다. 지원내역 삭제의 204와 빈 본문, 재삭제의 404를 확인했고 회사와 다른 지원내역이 유지되는 것도 확인했습니다. 회사 삭제와 연쇄 삭제 검증은 남아 있습니다.
 
 구현할 삭제 정책은 다음과 같습니다.
 
@@ -101,7 +105,7 @@ HTTP 응답 ← Controller ← Service ← 조회·저장 결과
 
 등록·수정 요청에서 회사명과 지원 직무는 `@NotBlank`, 지원 날짜는 `@NotNull`로 검사합니다. Controller의 `@Valid`가 검증을 실행하며, 실패하면 Spring의 기본 400 응답을 사용합니다. 회사 위치와 지원 메모는 선택사항입니다.
 
-수정·삭제 대상이 없으면 404로 응답하도록 구현했습니다. 지원내역 등록에서 존재하지 않는 회사를 조회했을 때는 `IllegalArgumentException`을 발생시키지만, 이를 404 등으로 변환하는 별도 오류 처리는 아직 없습니다. 회사 응답 DTO 적용 후 Java 17 컴파일은 통과했으며, 변경 후 API 재확인은 남아 있습니다.
+수정·삭제 대상이 없으면 404로 응답하도록 구현했습니다. 지원내역 등록에서 존재하지 않는 회사를 조회했을 때는 `IllegalArgumentException`을 발생시키지만, 이를 404 등으로 변환하는 별도 오류 처리는 아직 없습니다. 회사·지원내역 응답 DTO 적용 후 Java 17 컴파일과 API 확인을 마쳤습니다. 지원내역 재삭제의 404는 확인했으며, 없는 대상 수정·없는 회사 삭제의 404와 날짜만 null인 요청의 400은 별도 확인이 필요합니다.
 
 ## 화면과 후속 기능
 
@@ -113,7 +117,7 @@ HTTP 응답 ← Controller ← Service ← 조회·저장 결과
 - 상태는 `지원완료`, `서류합격`, `면접`, `최종합격`, `불합격`, `지원취소`를 사용합니다.
 - 현재 상태만 저장하며 변경 이력은 별도로 저장하지 않습니다.
 
-가까운 작업 순서는 회사 응답 DTO 적용 후 API 재확인 → 지원내역 응답 DTO 적용 → 회사 연쇄 삭제 구현·검증입니다. 이후 지원 상태와 관리 화면, 회사 삭제 확인창을 구현합니다. 기본 기능을 완성한 뒤 검색·필터·페이징 등의 확장 기능을 검토합니다.
+다음 작업은 회사 연쇄 삭제 구현·검증입니다. 삭제한 회사의 지원내역만 없어지고 다른 회사와 그 지원내역은 유지되는지 확인합니다. 이후 지원 상태와 관리 화면, 회사 삭제 확인창을 구현합니다. 기본 기능을 완성한 뒤 검색·필터·페이징 등의 확장 기능을 검토합니다.
 
 ## 개발 DB 설정
 
