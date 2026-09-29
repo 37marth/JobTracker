@@ -7,6 +7,8 @@
 @baseUrl = http://localhost:8080
 @companyId = 1
 @jobApplicationId = 1
+# 연쇄 삭제 테스트에서 유지되어야 할 다른 회사 ID. companyId와 다른 실제 회사 ID를 사용한다.
+@otherCompanyId = 2
 
 ### 1. 회사 목록 조회 - 200 예상 (data.sql의 테스트 회사 확인)
 GET {{baseUrl}}/api/companies
@@ -90,3 +92,90 @@ DELETE {{baseUrl}}/api/job-applications/{{jobApplicationId}}
 ### 11. 같은 지원내역 다시 삭제 - 10번으로 삭제한 뒤 실행하면 404 예상
 # 두 요청 사이에 서버를 재시작하거나 jobApplicationId를 바꾸지 않는다.
 DELETE {{baseUrl}}/api/job-applications/{{jobApplicationId}}
+
+### 12. 다른 회사에 지원내역 등록 - 회사 삭제의 영향이 없는지 비교할 데이터 (201 예상)
+# 연쇄 삭제 테스트 준비: 1번으로 두 회사가 있는지 확인하고, 3번을 두 번 실행한다.
+# 이어서 이 요청을 실행한다. 이후 13~17번까지 서버를 재시작하거나 ID를 바꾸지 않는다.
+POST {{baseUrl}}/api/companies/{{otherCompanyId}}/job-applications
+Content-Type: application/json
+
+{
+  "jobTitle": "유지되어야 할 지원 직무",
+  "appliedAt": "2026-09-29",
+  "memo": "다른 회사를 삭제해도 이 지원내역은 남아야 함"
+}
+
+### 13. 회사 삭제 - 해당 회사와 연결된 지원내역 함께 삭제 (204, 본문 없음 예상)
+# 이 요청은 companyId에 해당하는 회사와 그 회사의 모든 지원내역을 삭제한다.
+# 화면의 확인창은 아직 없으므로 테스트용 회사 ID를 지정하고 개별 실행한다.
+DELETE {{baseUrl}}/api/companies/{{companyId}}
+
+### 14. 삭제한 회사의 지원내역 조회 - 200, 빈 목록 [] 예상
+# 현재 조회 API는 회사가 없어도 빈 목록을 반환한다.
+GET {{baseUrl}}/api/companies/{{companyId}}/job-applications
+Accept: application/json
+
+### 15. 회사 목록 확인 - 삭제한 회사는 없고 다른 회사는 남아 있어야 함 (200 예상)
+GET {{baseUrl}}/api/companies
+Accept: application/json
+
+### 16. 다른 회사의 지원내역 확인 - 12번에서 등록한 내역이 남아 있어야 함 (200 예상)
+GET {{baseUrl}}/api/companies/{{otherCompanyId}}/job-applications
+Accept: application/json
+
+### 17. 같은 회사 다시 삭제 - 13번으로 삭제한 뒤 실행하면 404 예상
+DELETE {{baseUrl}}/api/companies/{{companyId}}
+
+### 18. 지원 날짜만 null로 등록 - 400 예상
+# 18~21번은 삭제 테스트 전에 실행하거나, 실제 존재하는 회사·지원내역 ID를 다시 지정한다.
+# 정상적인 직무와 메모를 보내 날짜 검증만 확인한다. 4번으로 새 내역이 생기지 않았는지 확인한다.
+POST {{baseUrl}}/api/companies/{{companyId}}/job-applications
+Content-Type: application/json
+
+{
+  "jobTitle": "백엔드 개발자",
+  "appliedAt": null,
+  "memo": "날짜만 null인 등록 요청"
+}
+
+### 19. 지원 날짜만 null로 수정 - 400 예상, 기존 값 유지
+# 4번으로 수정 전후 값이 같은지 확인한다.
+PATCH {{baseUrl}}/api/job-applications/{{jobApplicationId}}
+Content-Type: application/json
+
+{
+  "jobTitle": "저장되면 안 되는 직무",
+  "appliedAt": null,
+  "memo": "저장되면 안 되는 메모"
+}
+
+### 20. 공백만 있는 지원 직무로 등록 - 400 예상
+POST {{baseUrl}}/api/companies/{{companyId}}/job-applications
+Content-Type: application/json
+
+{
+  "jobTitle": "   ",
+  "appliedAt": "2026-09-29",
+  "memo": "직무 공백 검증"
+}
+
+### 21. null인 지원 직무로 등록 - 400 예상
+POST {{baseUrl}}/api/companies/{{companyId}}/job-applications
+Content-Type: application/json
+
+{
+  "jobTitle": null,
+  "appliedAt": "2026-09-29",
+  "memo": "직무 null 검증"
+}
+
+### 22. 삭제된 회사에 지원내역 등록 - 현재 500, 다음 작업에서 404로 처리 예정
+# 13번으로 companyId 회사를 삭제한 뒤 실행한다. 정상 입력으로 회사 부재 처리만 확인한다.
+POST {{baseUrl}}/api/companies/{{companyId}}/job-applications
+Content-Type: application/json
+
+{
+  "jobTitle": "백엔드 개발자",
+  "appliedAt": "2026-09-29",
+  "memo": "없는 회사의 오류 응답 확인"
+}
