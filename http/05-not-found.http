@@ -1,0 +1,102 @@
+# 없는 대상의 수정·삭제가 404를 반환하는지 확인
+# 흐름: 준비·조회 → 지원내역 삭제·조회 → 없는 지원내역 요청·조회 → 회사 삭제·조회 → 없는 회사 요청·조회
+# 이 파일의 1번부터 순서대로 실행한다. 다른 테스트 파일을 먼저 실행할 필요는 없다.
+# 등록 응답의 ID는 자동으로 다음 요청에 전달된다. 숫자를 직접 바꾸지 않는다.
+# 예상과 다른 응답이 나오면 멈추고 확인한다. 중간에 서버를 재시작하지 않는다.
+# 마지막 정리 요청은 이 파일에서 만든 데이터만 삭제한다.
+
+@baseUrl = http://localhost:8080
+
+### 1. 준비: 테스트 회사 등록 — 201 예상
+< {%
+    client.global.clear("jt_missing_company_id");
+    client.global.clear("jt_missing_application_id");
+%}
+POST {{baseUrl}}/api/companies
+Content-Type: application/json
+
+{
+  "name": "없는 대상 테스트 회사",
+  "location": "성남"
+}
+
+> {%
+    client.assert(response.status === 201, "등록에 실패했어. 응답을 확인하고 여기서 멈춰줘.");
+    client.assert(response.body.id != null, "등록 응답에 ID가 없어.");
+    client.global.set("jt_missing_company_id", response.body.id);
+%}
+
+### 2. 준비: 테스트 지원내역 등록 — 201 예상
+< {%
+    client.global.clear("jt_missing_application_id");
+%}
+POST {{baseUrl}}/api/companies/{{jt_missing_company_id}}/job-applications
+Content-Type: application/json
+
+{
+  "jobTitle": "백엔드 개발자",
+  "appliedAt": "2026-09-29",
+  "memo": "지원 테스트"
+}
+
+> {%
+    client.assert(response.status === 201, "등록에 실패했어. 응답을 확인하고 여기서 멈춰줘.");
+    client.assert(response.body.id != null, "등록 응답에 ID가 없어.");
+    client.global.set("jt_missing_application_id", response.body.id);
+%}
+
+### 3. 삭제 전 확인: 방금 등록한 지원내역 조회 — 200 예상
+# 2번에서 만든 지원내역 한 건이 있어야 한다.
+GET {{baseUrl}}/api/companies/{{jt_missing_company_id}}/job-applications
+Accept: application/json
+
+### 4. 지원내역 삭제 — 204 예상
+DELETE {{baseUrl}}/api/job-applications/{{jt_missing_application_id}}
+
+### 5. 삭제 확인: 지원내역이 사라졌는지 조회 — 200 예상
+# 예상 본문: []. 이제 이 지원내역 ID는 없는 대상이다.
+GET {{baseUrl}}/api/companies/{{jt_missing_company_id}}/job-applications
+Accept: application/json
+
+### 6. 이미 삭제한 지원내역 수정 요청 — 404 예상
+PATCH {{baseUrl}}/api/job-applications/{{jt_missing_application_id}}
+Content-Type: application/json
+
+{
+  "jobTitle": "기술지원",
+  "appliedAt": "2026-09-29",
+  "memo": "지원 테스트"
+}
+
+### 7. 이미 삭제한 지원내역 다시 삭제 — 404 예상
+DELETE {{baseUrl}}/api/job-applications/{{jt_missing_application_id}}
+
+### 8. 확인: 지원내역 목록이 여전히 비어 있는지 조회 — 200 예상
+# 예상 본문: []. 실패한 수정·삭제 요청으로 새 내역이 생기지 않아야 한다.
+GET {{baseUrl}}/api/companies/{{jt_missing_company_id}}/job-applications
+Accept: application/json
+
+### 9. 정리: 테스트 회사 삭제 — 204 예상
+DELETE {{baseUrl}}/api/companies/{{jt_missing_company_id}}
+
+### 10. 삭제 확인: 테스트 회사가 목록에서 사라졌는지 조회 — 200 예상
+# 1번에서 받은 회사 ID가 목록에 없어야 한다.
+GET {{baseUrl}}/api/companies
+Accept: application/json
+
+### 11. 이미 삭제한 회사 수정 요청 — 404 예상
+PATCH {{baseUrl}}/api/companies/{{jt_missing_company_id}}
+Content-Type: application/json
+
+{
+  "name": "없는 회사 수정",
+  "location": "성남"
+}
+
+### 12. 이미 삭제한 회사 다시 삭제 — 404 예상
+DELETE {{baseUrl}}/api/companies/{{jt_missing_company_id}}
+
+### 13. 최종 확인: 테스트 회사는 없고 다른 회사들은 그대로인지 조회 — 200 예상
+# 10번의 회사 목록과 같아야 한다. 실패한 수정·삭제 요청으로 회사가 다시 생기지 않아야 한다.
+GET {{baseUrl}}/api/companies
+Accept: application/json
