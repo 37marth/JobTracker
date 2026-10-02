@@ -1,0 +1,113 @@
+<div id="jt-flow-preview">
+  <style>
+    #jt-flow-preview { color-scheme: light dark; color: light-dark(#20252d,#e6e9ef); font-family: system-ui,sans-serif; font-size: 14px; line-height: 1.5; }
+    #jt-flow-preview .jt-app { background: light-dark(#f6f7fa,#181b21); border: 1px solid light-dark(#dce0e7,#343944); border-radius: 12px; padding: 24px; }
+    #jt-flow-preview h2 { font-size: 22px; font-weight: 600; margin: 0; }
+    #jt-flow-preview h3 { font-size: 16px; font-weight: 600; margin: 0; }
+    #jt-flow-preview .jt-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 22px; padding-right: 80px; }
+    #jt-flow-preview .jt-sub { color: light-dark(#616978,#a8b0bf); font-size: 13px; }
+    #jt-flow-preview .jt-company { margin-top: 14px; background: light-dark(#fff,#232730); border: 1px solid light-dark(#dce0e7,#3b414e); border-radius: 10px; overflow: hidden; }
+    #jt-flow-preview .jt-row { padding: 18px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+    #jt-flow-preview .jt-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    #jt-flow-preview button { font: inherit; border: 1px solid light-dark(#d1d7e2,#4a5262); border-radius: 6px; padding: 7px 12px; background: light-dark(#fff,#2a303a); color: inherit; }
+    #jt-flow-preview button.jt-primary { background: light-dark(#304b85,#9fb8f1); border-color: transparent; color: light-dark(#fff,#172643); }
+    #jt-flow-preview button.jt-danger { color: light-dark(#a72b37,#ffabb3); }
+    #jt-flow-preview button:focus-visible, #jt-flow-preview input:focus-visible, #jt-flow-preview select:focus-visible, #jt-flow-preview textarea:focus-visible { outline: 2px solid light-dark(#304b85,#9fb8f1); outline-offset: 2px; }
+    #jt-flow-preview .jt-detail { padding: 18px; border-top: 1px solid light-dark(#e2e6ed,#3b414e); }
+    #jt-flow-preview .jt-detail-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 16px; }
+    #jt-flow-preview .jt-application { padding: 16px 0; border-top: 1px solid light-dark(#e2e6ed,#3b414e); }
+    #jt-flow-preview .jt-application:first-of-type { border-top: 0; }
+    #jt-flow-preview .jt-application-top { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; }
+    #jt-flow-preview .jt-memo { margin: 10px 0; overflow-wrap: anywhere; }
+    #jt-flow-preview input, #jt-flow-preview select, #jt-flow-preview textarea { font: inherit; color: inherit; background: light-dark(#fff,#191e26); border: 1px solid light-dark(#cbd2dd,#4b5362); border-radius: 6px; padding: 8px; max-width: 100%; box-sizing: border-box; }
+    #jt-flow-preview label { display: grid; gap: 5px; }
+    #jt-flow-preview .jt-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+    #jt-flow-preview .jt-full { grid-column: 1/-1; }
+    #jt-flow-preview .jt-form, #jt-flow-preview .jt-warning { background: light-dark(#edf1f8,#202b3d); border-radius: 8px; padding: 16px; margin: 12px 0; }
+    #jt-flow-preview .jt-form .jt-actions, #jt-flow-preview .jt-warning .jt-actions { margin-top: 12px; }
+    #jt-flow-preview .jt-feedback { min-height: 22px; margin-top: 16px; color: light-dark(#355382,#b3cafa); }
+    #jt-flow-preview [hidden] { display: none !important; }
+    @media(max-width:520px) { #jt-flow-preview .jt-app { padding:14px; } #jt-flow-preview .jt-header { padding-right:0; } #jt-flow-preview .jt-fields { grid-template-columns:1fr; } #jt-flow-preview .jt-row { padding:14px; } }
+    @media(pointer:coarse) { #jt-flow-preview button, #jt-flow-preview select { min-height:44px; } }
+  </style>
+  <section class="jt-app" aria-label="JobTracker 화면 초안">
+    <header class="jt-header"><div><h2>JobTracker</h2><div class="jt-sub">회사별로 지원 기록을 관리해요</div></div><button class="jt-primary cursor-interaction" type="button" id="jt-add-company">회사 등록</button></header>
+    <div id="jt-company-form" hidden></div>
+    <div id="jt-companies"></div>
+    <div class="jt-feedback" id="jt-feedback" aria-live="polite"></div>
+  </section>
+  <script>
+    (() => {
+      const root = document.getElementById('jt-flow-preview');
+      const list = root.querySelector('#jt-companies');
+      const feedback = root.querySelector('#jt-feedback');
+      const companyForm = root.querySelector('#jt-company-form');
+      const labels = { APPLIED:'지원완료', DOCUMENT_PASS:'서류합격', INTERVIEW:'면접', ACCEPTED:'최종합격', REJECTED:'불합격', WITHDRAWN:'지원취소' };
+      const defaults = [
+        {id:1,name:'예시 회사 A',location:'판교',open:false,applications:[{id:11,jobTitle:'백엔드 개발자',appliedAt:'2026-09-28',memo:'채용 홈페이지에서 지원. 면접 일정 확인하기.',status:'APPLIED'},{id:12,jobTitle:'기술지원',appliedAt:'2026-10-01',memo:'채용 공고 링크 확인',status:'DOCUMENT_PASS'}]},
+        {id:2,name:'예시 회사 B',location:'서울',open:false,applications:[]}
+      ];
+      let companies = JSON.parse(JSON.stringify(defaults));
+      let pendingDelete = null;
+      let nextId = 100;
+      const escape = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const today = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+      function persist() {
+        if (window.openai?.setWidgetState) window.openai.setWidgetState({modelContent:{layout:'회사 목록에서 상세보기로 지원내역 펼치기, 상태 드롭다운 선택 즉시 변경'},privateContent:{companies}}).catch(()=>{});
+      }
+      function notify(message) { feedback.textContent=message; }
+      function render() {
+        list.innerHTML=companies.map(company=>`<section class="jt-company" data-company="${company.id}">
+          <div class="jt-row"><div><h3>${escape(company.name)}</h3><div class="jt-sub">${escape(company.location||'위치 미입력')} · 지원내역 ${company.applications.length}건</div></div>
+          <div class="jt-actions"><button type="button" class="cursor-interaction" data-action="toggle" aria-expanded="${company.open}" aria-controls="jt-detail-${company.id}">${company.open?'접기':'상세보기'}</button><button type="button" class="cursor-interaction" data-action="edit-company">회사 수정</button><button type="button" class="jt-danger cursor-interaction" data-action="delete-company">회사 삭제</button></div></div>
+          <div data-editor="company"></div>
+          ${pendingDelete===company.id?`<div class="jt-warning" role="alert">${company.applications.length?'지원내역이 아직 남아 있습니다. 이 회사를 삭제하면 지원내역도 모두 삭제됩니다. ':''}정말 삭제하시겠습니까?<div class="jt-actions"><button type="button" class="cursor-interaction" data-action="cancel-delete">아니요, 취소</button><button type="button" class="jt-danger cursor-interaction" data-action="confirm-delete">예, 삭제</button></div></div>`:''}
+          <div class="jt-detail" id="jt-detail-${company.id}" ${company.open?'':'hidden'}><div class="jt-detail-head"><h3>지원내역</h3><button type="button" class="jt-primary cursor-interaction" data-action="add-application">지원내역 등록</button></div>
+          <div data-editor="application"></div>
+          ${company.applications.length?company.applications.map(app=>`<article class="jt-application" data-application="${app.id}"><div class="jt-application-top"><div><strong>${escape(app.jobTitle)}</strong><div class="jt-sub">지원 날짜 ${escape(app.appliedAt)}</div></div><label>지원 상태<select class="cursor-interaction" data-status="${app.id}" aria-label="${escape(app.jobTitle)} 지원 상태">${Object.entries(labels).map(([value,label])=>`<option value="${value}" ${app.status===value?'selected':''}>${label}</option>`).join('')}</select></label></div><p class="jt-memo">${escape(app.memo||'메모 없음')}</p><div class="jt-actions"><button type="button" class="cursor-interaction" data-action="edit-application">직무·날짜·메모 수정</button><button type="button" class="jt-danger cursor-interaction" data-action="delete-application">지원내역 삭제</button></div></article>`).join(''):'<p class="jt-sub">등록한 지원내역이 없습니다.</p>'}</div>
+          </section>`).join('');
+      }
+      function openForm(holder, company, app, kind) {
+        const editing = kind==='company';
+        holder.hidden=false;
+        holder.innerHTML=`<form class="jt-form"><div class="jt-fields">${editing?`<label>회사 이름<input name="name" required value="${escape(company?.name||'')}"></label><label>위치<input name="location" value="${escape(company?.location||'')}"></label>`:`<label>지원 직무<input name="jobTitle" required value="${escape(app?.jobTitle||'')}"></label><label>지원 날짜<input type="date" name="appliedAt" required value="${escape(app?.appliedAt||today())}"></label><label class="jt-full">메모<textarea name="memo" rows="2">${escape(app?.memo||'')}</textarea></label>`}</div><div class="jt-actions"><button type="submit" class="jt-primary cursor-interaction">${company&&editing||app?'수정 저장':'등록'}</button><button type="button" class="cursor-interaction" data-cancel>취소</button></div></form>`;
+        holder.querySelector('[data-cancel]').onclick=()=>{holder.innerHTML='';holder.hidden=true;};
+        holder.querySelector('form').onsubmit=event=>{
+          event.preventDefault();const data=new FormData(event.currentTarget);
+          const values=Object.fromEntries(data);
+          if (!(values.name||values.jobTitle||'').trim()) return;
+          if(editing) { if(company) Object.assign(company,values); else companies.push({id:nextId++, ...values,open:false,applications:[]}); }
+          else { if(app) Object.assign(app,values); else company.applications.push({id:nextId++,...values,status:'APPLIED'}); }
+          holder.innerHTML='';holder.hidden=true;render();persist();notify(editing?'회사 정보를 반영했습니다.':'지원내역을 반영했습니다.');
+        };
+        holder.querySelector('input').focus();
+      }
+      root.querySelector('#jt-add-company').onclick=()=>openForm(companyForm,null,null,'company');
+      list.addEventListener('change',event=>{
+        const select=event.target.closest('[data-status]');if(!select)return;
+        const company=companies.find(c=>c.id===Number(select.closest('[data-company]').dataset.company));
+        const app=company.applications.find(a=>a.id===Number(select.dataset.status));
+        app.status=select.value;persist();notify(`${app.jobTitle} 상태를 ‘${labels[app.status]}’으로 변경했습니다.`);
+      });
+      list.addEventListener('click',event=>{
+        const button=event.target.closest('[data-action]');if(!button)return;
+        const section=button.closest('[data-company]');
+        const company=companies.find(c=>c.id===Number(section.dataset.company));
+        const article=button.closest('[data-application]');
+        const app=article?company.applications.find(a=>a.id===Number(article.dataset.application)):null;
+        const action=button.dataset.action;
+        if(action==='toggle'){company.open=!company.open;render();persist();root.querySelector(`[data-company="${company.id}"] [data-action="toggle"]`).focus();}
+        if(action==='edit-company')openForm(section.querySelector('[data-editor="company"]'),company,null,'company');
+        if(action==='add-application')openForm(section.querySelector('[data-editor="application"]'),company,null,'application');
+        if(action==='edit-application')openForm(section.querySelector('[data-editor="application"]'),company,app,'application');
+        if(action==='delete-application'){company.applications=company.applications.filter(a=>a.id!==app.id);render();persist();notify('지원내역을 삭제했습니다. 회사는 그대로 유지됩니다.');}
+        if(action==='delete-company'){pendingDelete=company.id;render();}
+        if(action==='cancel-delete'){pendingDelete=null;render();notify('회사 삭제를 취소했습니다.');}
+        if(action==='confirm-delete'){companies=companies.filter(c=>c.id!==company.id);pendingDelete=null;render();persist();notify('회사와 연결된 지원내역을 함께 삭제했습니다.');}
+      });
+      function restore(state){if(Array.isArray(state?.privateContent?.companies)){companies=state.privateContent.companies;nextId=Math.max(100,...companies.flatMap(c=>[c.id,...c.applications.map(a=>a.id)]))+1;render();}}
+      render();restore(window.openai?.widgetState);
+      window.addEventListener('openai:set_globals',event=>restore(event.detail?.globals?.widgetState));
+    })();
+  </script>
+</div>

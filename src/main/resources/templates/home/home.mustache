@@ -1,1 +1,14 @@
 <h1>JobTracker</h1>
+
+<h2>회사 목록</h2>
+
+{{#companies}}
+    <div>
+        <h3>{{name}}</h3>
+        <p>위치: {{location}}</p>
+    </div>
+{{/companies}}
+
+{{^companies}}
+    <p>등록된 회사가 없습니다.</p>
+{{/companies}}
