@@ -17,10 +17,15 @@ HTTP 응답 ← Controller ← Service ← 조회·저장 결과
 | Entity | 저장할 데이터와 연관관계 표현 | Company, JobApplication |
 | 요청 DTO | 요청 본문의 입력값 전달 | CompanyRequestDto, JobApplicationRequestDto, JobApplicationStatusRequestDto |
 | 응답 DTO | 회사·지원내역에서 응답에 필요한 값 전달 | CompanyResponseDto, JobApplicationResponseDto |
+| 화면 DTO | 회사 정보와 해당 회사의 지원내역 목록을 묶어 템플릿에 전달 | CompanyViewDto |
 
 응답 DTO 변환은 Service에서 처리하고, Controller는 반환된 DTO에 HTTP 상태를 붙여 응답합니다. 회사와 지원내역의 등록·조회·수정에 적용했습니다. Repository는 계속 엔티티를 조회·저장합니다.
 
-`HomeController`는 `CompanyService.index()`로 회사 DTO 목록을 조회하고, `Model`에 `companies`라는 이름으로 담아 `home/home.mustache`에 전달합니다. 템플릿은 `{{#companies}}`로 이름과 위치를 반복 표시하며, `{{^companies}}`로 빈 목록 안내를 작성했습니다. 회사 두 개가 포함된 HTML 응답은 확인했고, 빈 목록 화면은 아직 실행 확인 전입니다. 등록·수정·삭제 등 화면의 동작은 JavaScript의 `fetch()`로 기존 API에 연결할 계획입니다.
+`HomeController`는 `CompanyService.index()`로 회사 DTO 목록을 조회합니다. 각 회사의 ID로 `JobApplicationService.index(companyId)`를 호출하고, 회사 정보와 지원내역 목록을 `CompanyViewDto`에 묶어 `Model`의 `companies`에 담습니다. 템플릿은 `{{#companies}}` 안의 `{{#applications}}`로 회사별 지원내역을 반복 출력합니다. 회사 목록과 지원내역 모두 서버의 Mustache가 HTML로 만들며, HTML의 `<details>`·`<summary>`로 회사 이름을 눌러 펼치고 접습니다. 클릭 시 JavaScript로 지원내역을 조회하거나 HTML 요소를 만들지 않습니다.
+
+`CompanyViewDto`는 화면 전달용이며, API는 기존 `CompanyResponseDto`와 `JobApplicationResponseDto`를 사용합니다. `JobApplicationStatus.getDisplayName()`은 화면에 표시할 한글 이름을 반환하고, API와 DB에는 기존 enum 이름을 사용합니다. 등록 버튼은 `fetch()`로 회사 등록 API를 호출한 뒤 성공하면 페이지를 새로고침합니다.
+
+현재 첫 화면은 회사 전체와 각 회사의 지원내역을 미리 조회합니다. 회사 수만큼 지원내역 조회가 추가되므로, 목록이 커지면 조회 방식과 페이징을 검토합니다. 펼치기 자체는 서버 요청을 보내지 않고, 최신 데이터는 페이지 새로고침 시 반영됩니다. 빈 회사 목록 안내도 템플릿에 작성되어 있으며, 빈 회사 목록 화면의 실행 확인은 아직입니다.
 
 ## 데이터 관계
 
@@ -125,7 +130,7 @@ API 테스트 요청은 `http/` 아래에서 회사 CRUD, 지원내역 CRUD, 입
 
 ## 화면과 후속 기능
 
-현재 첫 화면에는 회사 이름과 위치를 표시합니다. 이후 상세보기를 누르면 같은 화면에서 해당 회사의 지원내역이 펼쳐지고, 지원 상태는 드롭다운 선택 즉시 변경하도록 구현합니다. 화면 초안과 개선사항은 [목업 안내](docs/mockups/README.md)에 보관했습니다. ‘지원내역’ 제목과 첫 내역 사이의 구분선은 실제 화면을 만들 때 추가합니다.
+첫 화면에는 회사 이름과 위치가 표시되며, 회사 이름을 누르면 같은 화면에서 해당 회사의 지원내역 전체가 펼쳐집니다. 직무·지원 날짜·메모·상태는 Mustache로 출력하고, ‘지원내역’ 제목과 첫 내역 사이에 구분선을 넣었습니다. 상태 드롭다운 선택 즉시 변경하는 화면은 후속 작업입니다. 화면 초안과 개선사항은 [목업 안내](docs/mockups/README.md)에 보관했습니다.
 
 지원 상태 API는 다음 기준으로 구현했습니다. 상태 선택 화면은 아직 연결하지 않았습니다.
 
@@ -133,7 +138,7 @@ API 테스트 요청은 `http/` 아래에서 회사 CRUD, 지원내역 CRUD, 입
 - 상태는 `지원완료`, `서류합격`, `면접`, `최종합격`, `불합격`, `지원취소`를 사용합니다.
 - 현재 상태만 저장하며 변경 이력은 별도로 저장하지 않습니다.
 
-회사 연쇄 삭제와 없는 회사 등록 요청의 404 처리를 확인했고, 지원 상태 변경은 `06-status.http`를 수동 실행해 확인했습니다. 다음은 회사 이름·위치 입력칸과 등록 버튼을 만들고 기존 등록 API에 연결하는 작업입니다. 이후 지원내역 관리 화면과 회사 삭제 확인창을 구현합니다. 검색·필터·페이징 등의 확장 기능은 기본 기능과 화면을 완성한 뒤 검토합니다.
+회사 연쇄 삭제와 없는 회사 등록 요청의 404 처리를 확인했고, 지원 상태 변경은 `06-status.http`를 수동 실행해 확인했습니다. 회사 등록 화면은 기존 API에 연결했습니다. 회사별 지원내역 출력은 실제 API 응답 사본과 추가 예시 데이터를 사용하는 별도 검증 서버에서 실제 컨트롤러·Mustache로 확인했습니다. 다음은 지원내역 등록 화면이며, 이후 수정·삭제·상태 선택과 회사 삭제 확인창을 구현합니다. 검색·필터·페이징 등의 확장 기능은 기본 기능과 화면을 완성한 뒤 검토합니다.
 
 ## 개발 DB 설정
 

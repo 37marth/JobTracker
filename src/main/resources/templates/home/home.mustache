@@ -1,14 +1,100 @@
+
 <h1>JobTracker</h1>
+
+<h2>회사 등록</h2>
+
+<div>
+    <label for="company-name">회사 이름</label>
+    <input type="text" id="company-name">
+</div>
+
+<div>
+    <label for="company-location">위치</label>
+    <input type="text" id="company-location">
+</div>
+
+<button type="button" id="company-create-btn">등록</button>
+
 
 <h2>회사 목록</h2>
 
 {{#companies}}
-    <div>
-        <h3>{{name}}</h3>
-        <p>위치: {{location}}</p>
-    </div>
+    <!-- details와 summary: 회사 이름을 누르면 지원내역을 펼치고 다시 누르면 접음. -->
+    <details id="company-{{id}}">
+        <summary>
+            <strong>{{name}}</strong> — 지원내역 보기<br>
+            위치: {{location}}
+        </summary>
+
+        <div id="company-detail-{{id}}">
+            <h4>지원내역</h4>
+            <hr>
+            <div id="application-list-{{id}}">
+                <!-- 현재 회사에 담긴 지원내역 목록을 Mustache가 반복해서 출력함. -->
+                {{#applications}}
+                    <article id="job-application-{{id}}">
+                        <h5>직무: {{jobTitle}}</h5>
+                        <p>지원 날짜: {{appliedAt}}</p>
+                        <p>상태: {{status.displayName}}</p>
+                        {{#memo}}
+                            <p>메모: {{memo}}</p>
+                        {{/memo}}
+                        {{^memo}}
+                            <p>메모: 없음</p>
+                        {{/memo}}
+                        <hr>
+                    </article>
+                {{/applications}}
+                {{^applications}}
+                    <p>등록된 지원내역이 없습니다.</p>
+                {{/applications}}
+            </div>
+        </div>
+    </details>
 {{/companies}}
 
 {{^companies}}
     <p>등록된 회사가 없습니다.</p>
 {{/companies}}
+
+<script>
+    // HTML에서 등록 버튼을 찾는다.
+    const createButton = document.querySelector("#company-create-btn");
+
+    // 등록 버튼을 클릭하면 이 함수를 실행한다.
+    createButton.addEventListener("click",async function () {
+        // 회사 이름 입력칸을 찾아 입력된 값을 읽는다.
+        const name = document.querySelector("#company-name").value;
+
+        // 위치 입력칸을 찾아 입력된 값을 읽는다.
+        const location = document.querySelector("#company-location").value;
+
+        // 입력값 두 개를 회사 등록용 객체에 담는다.
+        const company = {
+            name: name,
+            location: location
+        };
+
+        // 객체를 서버에 보낼 JSON 문자열로 바꾼다.
+        const requestBody = JSON.stringify(company);
+
+        const url = "/api/companies";
+
+        // 회사 등록 API에 JSON을 보내고 응답을 기다린다.
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: requestBody
+        });
+
+        if (response.status === 201) {
+            // 등록 성공 시 현재 페이지를 새로고침한다.
+            window.location.reload();
+        } else {
+            alert("회사 등록 실패! 응답 상태: " + response.status);
+        }
+    });
+
+</script>
