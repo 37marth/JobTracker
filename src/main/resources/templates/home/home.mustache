@@ -27,11 +27,51 @@
         </summary>
 
         <div id="company-detail-{{id}}">
+            <button type="button"
+                    id="company-edit-btn-{{id}}"
+                    class="company-edit-btn"
+                    data-company-id="{{id}}">
+                회사 정보 수정
+            </button>
+
+            <!-- 수정 버튼을 누르기 전에는 입력칸과 저장·취소 버튼을 숨긴다. -->
+            <div id="company-edit-form-{{id}}" hidden>
+                <h4>회사 정보 수정</h4>
+
+                <div>
+                    <label for="company-edit-name-{{id}}">회사 이름</label>
+                    <input type="text"
+                           id="company-edit-name-{{id}}"
+                           value="{{name}}">
+                </div>
+
+                <div>
+                    <label for="company-edit-location-{{id}}">위치</label>
+                    <input type="text"
+                           id="company-edit-location-{{id}}"
+                           value="{{location}}">
+                </div>
+
+                <button type="button"
+                        class="company-update-btn"
+                        data-company-id="{{id}}">
+                    저장
+                </button>
+
+                <button type="button"
+                        class="company-edit-cancel-btn"
+                        data-company-id="{{id}}">
+                    취소
+                </button>
+            </div>
+
+            <hr>
             <h4>지원내역</h4>
             <hr>
             <div id="application-list-{{id}}">
                 <!-- 현재 회사에 담긴 지원내역 목록을 Mustache가 반복해서 출력함. -->
                 {{#applications}}
+                    <!-- applications 반복 안에서 id는 회사 ID가 아니라 현재 지원내역 ID. -->
                     <article id="job-application-{{id}}">
                         <h5>직무: {{jobTitle}}</h5>
                         <p>지원 날짜: {{appliedAt}}</p>
@@ -54,6 +94,49 @@
                         {{^memo}}
                             <p>메모: 없음</p>
                         {{/memo}}
+                        <button type="button"
+                                id="application-edit-btn-{{id}}"
+                                class="application-edit-btn"
+                                data-application-id="{{id}}">
+                            지원내역 수정
+                        </button>
+
+                        <!-- 수정 버튼을 누르면 보여줄 입력 영역. -->
+                        <div id="application-edit-form-{{id}}" hidden>
+                            <div>
+                                <label for="application-edit-job-title-{{id}}">지원 직무</label>
+                                <input type="text"
+                                       id="application-edit-job-title-{{id}}"
+                                       value="{{jobTitle}}">
+                            </div>
+
+                            <div>
+                                <label for="application-edit-date-{{id}}">지원 날짜</label>
+                                <!-- 수정할 때는 오늘 날짜가 아니라 기존 지원 날짜(appliedAt)를 채운다. -->
+                                <input type="date"
+                                       id="application-edit-date-{{id}}"
+                                       value="{{appliedAt}}">
+                            </div>
+
+                            <div>
+                                <label for="application-edit-memo-{{id}}">메모</label>
+                                <!-- textarea는 value 속성 대신 여는 태그와 닫는 태그 사이에 기존 메모를 넣는다. -->
+                                <textarea id="application-edit-memo-{{id}}">{{memo}}</textarea>
+                            </div>
+
+                            <button type="button"
+                                    class="application-update-btn"
+                                    data-application-id="{{id}}"
+                                    data-company-id="{{companyId}}">
+                                저장
+                            </button>
+
+                            <button type="button"
+                                    class="application-edit-cancel-btn"
+                                    data-application-id="{{id}}">
+                                취소
+                            </button>
+                        </div>
                         <hr>
                     </article>
                 {{/applications}}
@@ -93,12 +176,29 @@
 {{/companies}}
 
 <script>
+    // 기능 목차: 아래 번호와 같은 region 제목을 찾아 해당 기능만 읽는다.
+    // 01. 새로고침 후 회사 펼치기
+    // 02. 회사 등록
+    // 03. 지원내역 등록
+    // 04. 지원 상태 변경
+    // 05. 회사 수정칸 열기
+    // 06. 회사 수정 취소
+    // 07. 회사 수정 저장
+    // 08. 지원내역 수정칸 열기
+    // 09. 지원내역 수정 취소
+    // 10. 지원내역 수정 저장
+    // 버튼에 이벤트를 연결하는 코드는 페이지가 열릴 때 실행된다.
+    // click/change 함수 안의 코드는 실제 클릭/선택 변경 후 실행된다.
+
+    //region 01. 새로고침 후 회사 펼치기 — 시작
     // 주소의 # 뒤에 기록된 회사가 있으면 새로고침 후에도 펼쳐서 표시한다.
     const companyToOpen = document.getElementById(window.location.hash.substring(1));
     if (companyToOpen !== null && companyToOpen.tagName === "DETAILS") {
         companyToOpen.open = true;
     }
+    //endregion 01. 새로고침 후 회사 펼치기 — 끝
 
+    //region 02. 회사 등록 — 시작
     // HTML에서 등록 버튼을 찾는다.
     const createButton = document.querySelector("#company-create-btn");
 
@@ -137,7 +237,9 @@
             alert("회사 등록 실패! 응답 상태: " + response.status);
         }
     });
+    //endregion 02. 회사 등록 — 끝
 
+    //region 03. 지원내역 등록 — 시작
     // 모든 회사의 지원내역 등록 버튼을 찾는다.
     const applicationCreateButtons =
             document.querySelectorAll(".application-create-btn");
@@ -189,6 +291,9 @@
         });
     }
 
+    //endregion 03. 지원내역 등록 — 끝
+
+    //region 04. 지원 상태 변경 — 시작
     // 모든 지원내역의 상태 선택칸을 찾는다.
     const statusSelects =
             document.querySelectorAll(".application-status-select");
@@ -229,4 +334,174 @@
             });
         });
     }
+
+    //endregion 04. 지원 상태 변경 — 끝
+
+    //region 05. 회사 수정칸 열기 — 시작
+    // 수정 버튼을 누르면 해당 회사의 입력칸을 보여준다.
+    const companyEditButtons = document.querySelectorAll(".company-edit-btn");
+    for (const button of companyEditButtons) {
+        button.addEventListener("click", function () {
+            const companyId = button.dataset.companyId;
+            document.getElementById("company-edit-form-" + companyId).hidden = false;
+            button.hidden = true;
+            document.getElementById("company-edit-name-" + companyId).focus();
+        });
+    }
+
+    //endregion 05. 회사 수정칸 열기 — 끝
+
+    //region 06. 회사 수정 취소 — 시작
+    // 취소하면 입력값을 원래대로 되돌리고 수정 영역을 숨긴다. 서버 요청은 보내지 않는다.
+    const companyEditCancelButtons = document.querySelectorAll(".company-edit-cancel-btn");
+    for (const button of companyEditCancelButtons) {
+        button.addEventListener("click", function () {
+            const companyId = button.dataset.companyId;
+            const nameInput = document.getElementById("company-edit-name-" + companyId);
+            const locationInput = document.getElementById("company-edit-location-" + companyId);
+            // defaultValue: 서버가 HTML의 value에 넣어준 기존 값.
+            nameInput.value = nameInput.defaultValue;
+            locationInput.value = locationInput.defaultValue;
+            document.getElementById("company-edit-form-" + companyId).hidden = true;
+            const editButton = document.getElementById("company-edit-btn-" + companyId);
+            editButton.hidden = false;
+            editButton.focus();
+        });
+    }
+
+    //endregion 06. 회사 수정 취소 — 끝
+
+    //region 07. 회사 수정 저장 — 시작
+    // 회사 정보 저장 버튼들을 찾는다.
+    const companyUpdateButtons =
+            document.querySelectorAll(".company-update-btn");
+
+    for (const button of companyUpdateButtons) {
+        button.addEventListener("click", function () {
+            // 클릭한 버튼의 회사 ID를 읽는다.
+            const companyId = button.dataset.companyId;
+
+            // 해당 회사의 수정 입력칸에서 값을 읽는다.
+            const company = {
+                name: document.querySelector(
+                        "#company-edit-name-" + companyId).value,
+                location: document.querySelector(
+                        "#company-edit-location-" + companyId).value
+            };
+
+            // 수정할 회사의 주소를 만든다.
+            const url = "/api/companies/" + companyId;
+
+            fetch(url, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(company)
+            }).then(function (response) {
+                if (response.status === 200) {
+                    // 수정된 정보를 다시 불러오고 같은 회사를 펼쳐둔다.
+                    window.location.hash = "company-" + companyId;
+                    window.location.reload();
+                } else {
+                    alert("회사 수정 실패! 응답 상태: " + response.status);
+                }
+            });
+        });
+    }
+    //endregion 07. 회사 수정 저장 — 끝
+
+    //region 08. 지원내역 수정칸 열기 — 시작
+    // 모든 지원내역 수정 버튼을 찾는다.
+    const applicationEditButtons =
+            document.querySelectorAll(".application-edit-btn");
+
+    for (const button of applicationEditButtons) {
+        button.addEventListener("click", function () {
+            // 클릭한 버튼의 지원내역 ID를 읽는다.
+            const applicationId = button.dataset.applicationId;
+
+            // 해당 지원내역의 수정 입력칸을 보여준다.
+            document.getElementById(
+                    "application-edit-form-" + applicationId).hidden = false;
+
+            // 입력칸을 열었으므로 수정 버튼은 잠시 숨긴다.
+            button.hidden = true;
+        });
+    }
+
+    //endregion 08. 지원내역 수정칸 열기 — 끝
+
+    //region 09. 지원내역 수정 취소 — 시작
+    // 모든 지원내역 수정 취소 버튼을 찾는다.
+    const applicationEditCancelButtons =
+            document.querySelectorAll(".application-edit-cancel-btn");
+
+    for (const button of applicationEditCancelButtons) {
+        button.addEventListener("click", function () {
+            const applicationId = button.dataset.applicationId;
+
+            const jobTitleInput = document.getElementById(
+                    "application-edit-job-title-" + applicationId);
+            const dateInput = document.getElementById(
+                    "application-edit-date-" + applicationId);
+            const memoInput = document.getElementById(
+                    "application-edit-memo-" + applicationId);
+
+            // defaultValue: 처음 화면을 받았을 때 채워져 있던 기존 값.
+            jobTitleInput.value = jobTitleInput.defaultValue;
+            dateInput.value = dateInput.defaultValue;
+            memoInput.value = memoInput.defaultValue;
+
+            // 입력칸을 닫고 수정 버튼을 다시 보여준다.
+            document.getElementById(
+                    "application-edit-form-" + applicationId).hidden = true;
+            document.getElementById(
+                    "application-edit-btn-" + applicationId).hidden = false;
+        });
+    }
+
+    //endregion 09. 지원내역 수정 취소 — 끝
+
+    //region 10. 지원내역 수정 저장 — 시작
+    // 모든 지원내역 저장 버튼을 찾는다.
+    const applicationUpdateButtons =
+            document.querySelectorAll(".application-update-btn");
+
+    for (const button of applicationUpdateButtons) {
+        button.addEventListener("click", function () {
+            // 지원내역 ID는 수정 요청에, 회사 ID는 다시 펼칠 위치에 사용한다.
+            const applicationId = button.dataset.applicationId;
+            const companyId = button.dataset.companyId;
+
+            // 수정 입력칸에서 직무·날짜·메모를 함께 읽는다.
+            const application = {
+                jobTitle: document.getElementById(
+                        "application-edit-job-title-" + applicationId).value,
+                appliedAt: document.getElementById(
+                        "application-edit-date-" + applicationId).value,
+                memo: document.getElementById(
+                        "application-edit-memo-" + applicationId).value
+            };
+
+            const url = "/api/job-applications/" + applicationId;
+
+            fetch(url, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(application)
+            }).then(function (response) {
+                if (response.status === 200) {
+                    // 저장한 결과를 다시 불러오고 같은 회사를 펼쳐둔다.
+                    window.location.hash = "company-" + companyId;
+                    window.location.reload();
+                } else {
+                    alert("지원내역 수정 실패! 응답 상태: " + response.status);
+                }
+            });
+        });
+    }
+    //endregion 10. 지원내역 수정 저장 — 끝
 </script>

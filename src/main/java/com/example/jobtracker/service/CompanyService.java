@@ -28,7 +28,7 @@ public class CompanyService {
 
     // DB의 모든 회사를 조회하고, 각 엔티티를 응답 DTO로 바꿔 목록으로 반환함.
     public List<CompanyResponseDto> index() {
-        List<Company> companies = companyRepository.findAll();
+        List<Company> companies = companyRepository.findAllByOrderByIdAsc();
         return companies.stream()
                 .map(company -> createCompanyDto(company))
                 .collect(Collectors.toList());

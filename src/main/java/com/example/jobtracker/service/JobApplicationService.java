@@ -45,7 +45,7 @@ public class JobApplicationService {
 
     // 해당 회사의 지원내역을 조회해 DTO 목록으로 반환함. 조회 결과가 없으면 빈 목록을 반환함.
     public List<JobApplicationResponseDto> index(Long companyId) {
-        return jobApplicationRepository.findByCompanyId(companyId)
+        return jobApplicationRepository.findByCompanyIdOrderByIdAsc(companyId)
                 .stream()
                 .map(jobApplication -> createJobApplicationDto(jobApplication))
                 .collect(Collectors.toList());
