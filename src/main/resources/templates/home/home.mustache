@@ -33,7 +33,11 @@
                     data-company-id="{{id}}">
                 회사 정보 수정
             </button>
-
+            <button type="button"
+                    class="company-delete-btn"
+                    data-company-id="{{id}}">
+                회사 삭제
+            </button>
             <!-- 수정 버튼을 누르기 전에는 입력칸과 저장·취소 버튼을 숨긴다. -->
             <div id="company-edit-form-{{id}}" hidden>
                 <h4>회사 정보 수정</h4>
@@ -99,6 +103,14 @@
                                 class="application-edit-btn"
                                 data-application-id="{{id}}">
                             지원내역 수정
+                        </button>
+
+                        <!-- 지원내역 ID는 삭제 대상, 회사 ID는 삭제 후 다시 펼칠 회사. -->
+                        <button type="button"
+                                class="application-delete-btn"
+                                data-application-id="{{id}}"
+                                data-company-id="{{companyId}}">
+                            지원내역 삭제
                         </button>
 
                         <!-- 수정 버튼을 누르면 보여줄 입력 영역. -->
@@ -187,6 +199,8 @@
     // 08. 지원내역 수정칸 열기
     // 09. 지원내역 수정 취소
     // 10. 지원내역 수정 저장
+    // 11. 지원내역 삭제
+    // 12. 회사 삭제
     // 버튼에 이벤트를 연결하는 코드는 페이지가 열릴 때 실행된다.
     // click/change 함수 안의 코드는 실제 클릭/선택 변경 후 실행된다.
 
@@ -504,4 +518,81 @@
         });
     }
     //endregion 10. 지원내역 수정 저장 — 끝
+
+    //region 11. 지원내역 삭제 — 시작
+
+    // 1. application-delete-btn 클래스의 버튼들을 찾는다.
+    const applicationDeleteButtons =
+            document.querySelectorAll(".application-delete-btn");
+    // 2. 버튼을 하나씩 꺼내 클릭 함수를 연결한다.
+    for (const button of applicationDeleteButtons) {
+        button.addEventListener("click", function () {
+            // 3. 클릭한 버튼에서 지원내역 ID와 회사 ID를 읽는다.
+            const applicationId = button.dataset.applicationId;
+            const companyId = button.dataset.companyId;
+
+            // 확인은 true, 취소는 false를 반환한다.
+            const confirmed = window.confirm("이 지원내역을 정말 삭제할꺼에요?");
+            // 취소했다면 클릭 함수의 실행을 여기서 끝낸다.
+            if (!confirmed) {
+                return;
+            }
+            // 4. 해당 지원내역의 삭제 요청을 보낸다.
+            const url = "/api/job-applications/" + applicationId;
+            fetch(url, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }).then(function (response) {
+                if (response.status === 204) {
+                    window.location.hash = "company-" + companyId;
+                    window.location.reload();
+                }
+                else {
+                    alert("지원 내역 삭제 실패! 응답 상태:"+ response.status);
+                }
+            })
+        });
+    }
+
+    //endregion 11. 지원내역 삭제 — 끝
+
+    //region 12. 회사 삭제 — 시작
+
+    // 1.company-delete-btn 클래스의 버튼들을 찾는다.
+    const companyDeleteButtons =
+            document.querySelectorAll(".company-delete-btn");
+    // 2. 버튼을 하나씩 꺼내 클릭 함수를 연결한다.
+    for (const button of companyDeleteButtons) {
+        button.addEventListener("click", function () {
+            // 3. 클릭한 버튼에서 회사 ID를 읽는다.
+            const companyId = button.dataset.companyId;
+
+            // 확인은 true, 취소는 false를 반환한다.
+            const confirmed = window.confirm("이 회사를 삭제하면 연결된 지원내역도 모두 삭제돼. 정말 삭제할까?");
+            // 취소했다면 클릭 함수의 실행을 여기서 끝낸다.
+            if (!confirmed) {
+                return;
+            }
+            // 4. 해당 회사의 삭제 요청을 보낸다.
+            const url = "/api/companies/" + companyId;
+            fetch(url, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }).then(function (response) {
+                if (response.status === 204) {
+                    window.location.hash = "";
+                    window.location.reload();
+                }
+                else {
+                    alert("회사 삭제 실패! 응답 상태:"+ response.status);
+                }
+            })
+        });
+    }
+
+    //endregion 12.회사 삭제 — 끝
 </script>
