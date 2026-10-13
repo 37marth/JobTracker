@@ -1,191 +1,199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>JobTracker — 지원 기록 관리</title>
+    <!-- 화면 스타일은 별도 CSS 파일에서 관리한다. -->
+    <link rel="stylesheet" href="/css/jobtracker.css">
+</head>
+<body>
+<main class="app">
+    <header class="page-header">
+        <h1>JobTracker</h1>
+        <p class="muted">회사별 지원 기록을 한곳에서 관리하세요.</p>
+    </header>
 
-<h1>JobTracker</h1>
-
-<h2>회사 등록</h2>
-
-<div>
-    <label for="company-name">회사 이름</label>
-    <input type="text" id="company-name">
-</div>
-
-<div>
-    <label for="company-location">위치</label>
-    <input type="text" id="company-location">
-</div>
-
-<button type="button" id="company-create-btn">등록</button>
-
-
-<h2>회사 목록</h2>
-
-{{#companies}}
-    <!-- details와 summary: 회사 이름을 누르면 지원내역을 펼치고 다시 누르면 접음. -->
-    <details id="company-{{id}}">
-        <summary>
-            <strong>{{name}}</strong> — 지원내역 보기<br>
-            위치: {{location}}
-        </summary>
-
-        <div id="company-detail-{{id}}">
-            <button type="button"
-                    id="company-edit-btn-{{id}}"
-                    class="company-edit-btn"
-                    data-company-id="{{id}}">
-                회사 정보 수정
-            </button>
-            <button type="button"
-                    class="company-delete-btn"
-                    data-company-id="{{id}}">
-                회사 삭제
-            </button>
-            <!-- 수정 버튼을 누르기 전에는 입력칸과 저장·취소 버튼을 숨긴다. -->
-            <div id="company-edit-form-{{id}}" hidden>
-                <h4>회사 정보 수정</h4>
-
-                <div>
-                    <label for="company-edit-name-{{id}}">회사 이름</label>
-                    <input type="text"
-                           id="company-edit-name-{{id}}"
-                           value="{{name}}">
-                </div>
-
-                <div>
-                    <label for="company-edit-location-{{id}}">위치</label>
-                    <input type="text"
-                           id="company-edit-location-{{id}}"
-                           value="{{location}}">
-                </div>
-
-                <button type="button"
-                        class="company-update-btn"
-                        data-company-id="{{id}}">
-                    저장
-                </button>
-
-                <button type="button"
-                        class="company-edit-cancel-btn"
-                        data-company-id="{{id}}">
-                    취소
-                </button>
-            </div>
-
-            <hr>
-            <h4>지원내역</h4>
-            <hr>
-            <div id="application-list-{{id}}">
-                <!-- 현재 회사에 담긴 지원내역 목록을 Mustache가 반복해서 출력함. -->
-                {{#applications}}
-                    <!-- applications 반복 안에서 id는 회사 ID가 아니라 현재 지원내역 ID. -->
-                    <article id="job-application-{{id}}">
-                        <h5>직무: {{jobTitle}}</h5>
-                        <p>지원 날짜: {{appliedAt}}</p>
-                        <label for="application-status-{{id}}">지원 상태</label>
-                        <select id="application-status-{{id}}"
-                                class="application-status-select"
-                                data-application-id="{{id}}"
-                                data-company-id="{{companyId}}"
-                                data-status="{{status}}">
-                            <option value="APPLIED">지원완료</option>
-                            <option value="DOCUMENT_PASS">서류합격</option>
-                            <option value="INTERVIEW">면접</option>
-                            <option value="ACCEPTED">최종합격</option>
-                            <option value="REJECTED">불합격</option>
-                            <option value="WITHDRAWN">지원취소</option>
-                        </select>
-                        {{#memo}}
-                            <p>메모: {{memo}}</p>
-                        {{/memo}}
-                        {{^memo}}
-                            <p>메모: 없음</p>
-                        {{/memo}}
-                        <button type="button"
-                                id="application-edit-btn-{{id}}"
-                                class="application-edit-btn"
-                                data-application-id="{{id}}">
-                            지원내역 수정
-                        </button>
-
-                        <!-- 지원내역 ID는 삭제 대상, 회사 ID는 삭제 후 다시 펼칠 회사. -->
-                        <button type="button"
-                                class="application-delete-btn"
-                                data-application-id="{{id}}"
-                                data-company-id="{{companyId}}">
-                            지원내역 삭제
-                        </button>
-
-                        <!-- 수정 버튼을 누르면 보여줄 입력 영역. -->
-                        <div id="application-edit-form-{{id}}" hidden>
-                            <div>
-                                <label for="application-edit-job-title-{{id}}">지원 직무</label>
-                                <input type="text"
-                                       id="application-edit-job-title-{{id}}"
-                                       value="{{jobTitle}}">
-                            </div>
-
-                            <div>
-                                <label for="application-edit-date-{{id}}">지원 날짜</label>
-                                <!-- 수정할 때는 오늘 날짜가 아니라 기존 지원 날짜(appliedAt)를 채운다. -->
-                                <input type="date"
-                                       id="application-edit-date-{{id}}"
-                                       value="{{appliedAt}}">
-                            </div>
-
-                            <div>
-                                <label for="application-edit-memo-{{id}}">메모</label>
-                                <!-- textarea는 value 속성 대신 여는 태그와 닫는 태그 사이에 기존 메모를 넣는다. -->
-                                <textarea id="application-edit-memo-{{id}}">{{memo}}</textarea>
-                            </div>
-
-                            <button type="button"
-                                    class="application-update-btn"
-                                    data-application-id="{{id}}"
-                                    data-company-id="{{companyId}}">
-                                저장
-                            </button>
-
-                            <button type="button"
-                                    class="application-edit-cancel-btn"
-                                    data-application-id="{{id}}">
-                                취소
-                            </button>
-                        </div>
-                        <hr>
-                    </article>
-                {{/applications}}
-                {{^applications}}
-                    <p>등록된 지원내역이 없습니다.</p>
-                {{/applications}}
-            </div>
-            <!-- 현재 회사에 지원내역을 추가하기 위한 입력칸. -->
-            <h4>지원내역 등록</h4>
-
+    <!-- 회사 등록: 입력칸은 항상 표시하고 기존 등록 버튼을 사용한다. -->
+    <section class="panel" aria-labelledby="company-create-heading">
+        <h2 id="company-create-heading">회사 등록</h2>
+        <div class="fields">
             <div>
-                <label for="application-job-title-{{id}}">지원 직무</label>
-                <input type="text" id="application-job-title-{{id}}">
+                <label for="company-name">회사 이름</label>
+                <input type="text" id="company-name">
             </div>
-
             <div>
-                <label for="application-date-{{id}}">지원 날짜</label>
-                <input type="date" id="application-date-{{id}}" value="{{today}}">
+                <label for="company-location">위치</label>
+                <input type="text" id="company-location">
             </div>
-
-            <div>
-                <label for="application-memo-{{id}}">메모</label>
-                <textarea id="application-memo-{{id}}"></textarea>
-            </div>
-
-            <button type="button"
-                    class="application-create-btn"
-                    data-company-id="{{id}}">
-                지원내역 등록
-            </button>
         </div>
-    </details>
-{{/companies}}
+        <div class="actions form-actions">
+            <button type="button" id="company-create-btn" class="button-primary">등록</button>
+        </div>
+    </section>
 
-{{^companies}}
-    <p>등록된 회사가 없습니다.</p>
-{{/companies}}
+    <section aria-labelledby="company-list-heading">
+        <h2 id="company-list-heading">회사 목록</h2>
+        {{#companies}}
+            <!-- details와 summary: 회사 이름을 누르면 지원내역을 펼치고 다시 누르면 접음. -->
+            <details id="company-{{id}}" class="company-card">
+                <summary>
+                    <strong class="company-name">{{name}}</strong>
+                    <span class="summary-hint">지원내역 펼치기 · 접기</span>
+                    <span class="company-location">위치: {{#location}}{{location}}{{/location}}{{^location}}미입력{{/location}}</span>
+                </summary>
+
+                <div id="company-detail-{{id}}" class="company-detail">
+                    <div class="actions">
+                        <button type="button"
+                                id="company-edit-btn-{{id}}"
+                                class="company-edit-btn"
+                                data-company-id="{{id}}">회사 정보 수정</button>
+                        <button type="button"
+                                class="company-delete-btn button-danger"
+                                data-company-id="{{id}}">회사 삭제</button>
+                    </div>
+
+                    <!-- 수정 버튼을 누르기 전에는 입력칸과 저장·취소 버튼을 숨긴다. -->
+                    <div id="company-edit-form-{{id}}" class="form-box" hidden>
+                        <h3>회사 정보 수정</h3>
+                        <div class="fields">
+                            <div>
+                                <label for="company-edit-name-{{id}}">회사 이름</label>
+                                <input type="text" id="company-edit-name-{{id}}" value="{{name}}">
+                            </div>
+                            <div>
+                                <label for="company-edit-location-{{id}}">위치</label>
+                                <input type="text" id="company-edit-location-{{id}}" value="{{location}}">
+                            </div>
+                        </div>
+                        <div class="actions form-actions">
+                            <button type="button"
+                                    class="company-update-btn button-primary"
+                                    data-company-id="{{id}}">저장</button>
+                            <button type="button"
+                                    class="company-edit-cancel-btn"
+                                    data-company-id="{{id}}">취소</button>
+                        </div>
+                    </div>
+
+                    <!-- 제목 아래 구분선으로 지원내역 목록의 시작을 표시한다. -->
+                    <h3 class="section-heading">지원내역</h3>
+                    <div id="application-list-{{id}}">
+                        <!-- 현재 회사에 담긴 지원내역 목록을 Mustache가 반복해서 출력함. -->
+                        {{#applications}}
+                            <!-- applications 반복 안에서 id는 회사 ID가 아니라 현재 지원내역 ID. -->
+                            <article id="job-application-{{id}}" class="application-item">
+                                <div class="application-top">
+                                    <div>
+                                        <h4 class="application-title">직무: {{jobTitle}}</h4>
+                                        <p class="application-date muted">지원 날짜: {{appliedAt}}</p>
+                                    </div>
+                                    <div class="status-field">
+                                        <label for="application-status-{{id}}">지원 상태</label>
+                                        <select id="application-status-{{id}}"
+                                                class="application-status-select"
+                                                data-application-id="{{id}}"
+                                                data-company-id="{{companyId}}"
+                                                data-status="{{status}}">
+                                            <option value="APPLIED">지원완료</option>
+                                            <option value="DOCUMENT_PASS">서류합격</option>
+                                            <option value="INTERVIEW">면접</option>
+                                            <option value="ACCEPTED">최종합격</option>
+                                            <option value="REJECTED">불합격</option>
+                                            <option value="WITHDRAWN">지원취소</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                {{#memo}}
+                                    <p class="memo">메모: {{memo}}</p>
+                                {{/memo}}
+                                {{^memo}}
+                                    <p class="memo muted">메모: 없음</p>
+                                {{/memo}}
+                                <div class="actions">
+                                    <button type="button"
+                                            id="application-edit-btn-{{id}}"
+                                            class="application-edit-btn"
+                                            data-application-id="{{id}}">지원내역 수정</button>
+                                    <!-- 지원내역 ID는 삭제 대상, 회사 ID는 삭제 후 다시 펼칠 회사. -->
+                                    <button type="button"
+                                            class="application-delete-btn button-danger"
+                                            data-application-id="{{id}}"
+                                            data-company-id="{{companyId}}">지원내역 삭제</button>
+                                </div>
+
+                                <!-- 수정 버튼을 누르면 보여줄 입력 영역. -->
+                                <div id="application-edit-form-{{id}}" class="form-box" hidden>
+                                    <h4>지원내역 수정</h4>
+                                    <div class="fields">
+                                        <div>
+                                            <label for="application-edit-job-title-{{id}}">지원 직무</label>
+                                            <input type="text"
+                                                   id="application-edit-job-title-{{id}}"
+                                                   value="{{jobTitle}}">
+                                        </div>
+                                        <div>
+                                            <label for="application-edit-date-{{id}}">지원 날짜</label>
+                                            <!-- 수정할 때는 오늘 날짜가 아니라 기존 지원 날짜(appliedAt)를 채운다. -->
+                                            <input type="date"
+                                                   id="application-edit-date-{{id}}"
+                                                   value="{{appliedAt}}">
+                                        </div>
+                                        <div class="field-full">
+                                            <label for="application-edit-memo-{{id}}">메모</label>
+                                            <!-- textarea는 value 속성 대신 여는 태그와 닫는 태그 사이에 기존 메모를 넣는다. -->
+                                            <textarea id="application-edit-memo-{{id}}" rows="3">{{memo}}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="actions form-actions">
+                                        <button type="button"
+                                                class="application-update-btn button-primary"
+                                                data-application-id="{{id}}"
+                                                data-company-id="{{companyId}}">저장</button>
+                                        <button type="button"
+                                                class="application-edit-cancel-btn"
+                                                data-application-id="{{id}}">취소</button>
+                                    </div>
+                                </div>
+                            </article>
+                        {{/applications}}
+                        {{^applications}}
+                            <p class="empty-state">등록된 지원내역이 없습니다.</p>
+                        {{/applications}}
+                    </div>
+
+                    <!-- 현재 회사에 지원내역을 추가하기 위한 입력칸. -->
+                    <section class="form-box" aria-labelledby="application-create-heading-{{id}}">
+                        <h3 id="application-create-heading-{{id}}">지원내역 등록</h3>
+                        <div class="fields">
+                            <div>
+                                <label for="application-job-title-{{id}}">지원 직무</label>
+                                <input type="text" id="application-job-title-{{id}}">
+                            </div>
+                            <div>
+                                <label for="application-date-{{id}}">지원 날짜</label>
+                                <input type="date" id="application-date-{{id}}" value="{{today}}">
+                            </div>
+                            <div class="field-full">
+                                <label for="application-memo-{{id}}">메모</label>
+                                <textarea id="application-memo-{{id}}" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="actions form-actions">
+                            <button type="button"
+                                    class="application-create-btn button-primary"
+                                    data-company-id="{{id}}">지원내역 등록</button>
+                        </div>
+                    </section>
+                </div>
+            </details>
+        {{/companies}}
+        {{^companies}}
+            <p class="empty-state">등록된 회사가 없습니다.</p>
+        {{/companies}}
+    </section>
+</main>
 
 <script>
     // 기능 목차: 아래 번호와 같은 region 제목을 찾아 해당 기능만 읽는다.
@@ -596,3 +604,5 @@
 
     //endregion 12.회사 삭제 — 끝
 </script>
+</body>
+</html>

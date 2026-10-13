@@ -1,0 +1,281 @@
+/* 1. 화면 전체: 가운데 정렬과 기본 글꼴 */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #f5f7fb;
+    color: #202b3b;
+    font-family: system-ui, -apple-system, "Malgun Gothic", sans-serif;
+    line-height: 1.6;
+}
+
+.app {
+    max-width: 948px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+}
+
+.page-header {
+    margin-bottom: 24px;
+}
+
+h1, h2, h3, h4, p {
+    margin-top: 0;
+}
+
+h1 {
+    margin-bottom: 4px;
+    font-size: 28px;
+}
+
+h2 {
+    margin-bottom: 18px;
+    font-size: 20px;
+}
+
+h3, h4 {
+    margin-bottom: 14px;
+    font-size: 17px;
+}
+
+.muted, .company-location {
+    color: #58677c;
+    font-size: 14px;
+}
+
+.panel, .company-card {
+    background: #fff;
+    border: 1px solid #dce3ed;
+    border-radius: 12px;
+}
+
+.panel {
+    margin-bottom: 28px;
+    padding: 24px;
+}
+
+/* 2. 입력칸: 넓은 화면에서는 두 칸, 좁은 화면에서는 한 칸 */
+.fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.field-full {
+    grid-column: 1 / -1;
+}
+
+label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+input, textarea, select {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 12px;
+    border: 1px solid #c7d2e0;
+    border-radius: 7px;
+    background: #fff;
+    color: inherit;
+    font: inherit;
+}
+
+textarea {
+    min-height: 88px;
+    resize: vertical;
+}
+
+/* 3. 버튼: 등록·저장은 파랑, 삭제는 빨강, 취소·수정은 기본색 */
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.form-actions {
+    margin-top: 18px;
+}
+
+button {
+    min-height: 42px;
+    padding: 9px 15px;
+    border: 1px solid #c7d2e0;
+    border-radius: 7px;
+    background: #fff;
+    color: #263b56;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #eef3f9;
+}
+
+.button-primary {
+    border-color: #3158c7;
+    background: #3158c7;
+    color: #fff;
+}
+
+.button-primary:hover {
+    border-color: #24449d;
+    background: #24449d;
+}
+
+.button-danger {
+    border-color: #e8bbc1;
+    color: #a52c3d;
+}
+
+.button-danger:hover {
+    background: #fff1f2;
+}
+
+button:focus-visible, summary:focus-visible,
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: 3px solid #3158c7;
+    outline-offset: 3px;
+}
+
+/* 4. 회사 카드와 펼쳐진 내용 */
+.company-card {
+    margin-bottom: 16px;
+}
+
+summary {
+    padding: 18px 22px;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+}
+
+summary:hover {
+    background: #f7f9fc;
+    border-radius: 12px;
+}
+
+summary::marker {
+    color: #3158c7;
+}
+
+.company-name {
+    font-size: 17px;
+}
+
+.summary-hint {
+    margin-left: 8px;
+    color: #58677c;
+    font-size: 13px;
+}
+
+.company-location {
+    display: block;
+    margin-top: 4px;
+}
+
+.company-detail {
+    padding: 22px;
+    border-top: 1px solid #dce3ed;
+}
+
+.section-heading {
+    margin: 26px 0 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #dce3ed;
+}
+
+/* 5. 지원내역 한 건: 직무·날짜와 상태를 함께 표시 */
+.application-item {
+    margin-bottom: 16px;
+    padding: 18px;
+    border: 1px solid #e1e7ef;
+    border-radius: 9px;
+    background: #f8fafc;
+}
+
+.application-top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.application-title {
+    margin-bottom: 6px;
+    overflow-wrap: anywhere;
+}
+
+.application-date {
+    margin-bottom: 0;
+}
+
+.status-field {
+    width: 160px;
+    max-width: 100%;
+}
+
+.memo {
+    margin: 18px 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.empty-state {
+    padding: 18px;
+    border: 1px dashed #c7d2e0;
+    border-radius: 8px;
+    color: #58677c;
+    background: #f8fafc;
+}
+
+/* 6. 등록·수정 입력 영역. hidden은 기존 JavaScript가 열고 닫음. */
+.form-box {
+    margin-top: 22px;
+    padding: 20px;
+    border: 1px solid #dce3ed;
+    border-radius: 9px;
+    background: #f1f5fb;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+/* 7. 모바일: 입력칸과 상태 선택을 한 줄씩 배치 */
+@media (max-width: 600px) {
+    .app {
+        padding: 24px 16px 40px;
+    }
+
+    .panel, .company-detail {
+        padding: 18px;
+    }
+
+    summary {
+        padding: 16px 18px;
+    }
+
+    .fields {
+        grid-template-columns: 1fr;
+    }
+
+    .status-field {
+        width: 100%;
+    }
+
+    .form-box, .application-item {
+        padding: 16px;
+    }
+
+    .summary-hint {
+        display: block;
+        margin-left: 0;
+    }
+}
