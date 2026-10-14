@@ -20,4 +20,12 @@ public class CompanyViewDto {
         this.location = company.getLocation();
         this.applications = applications;
     }
+
+    // 위치를 입력하지 않았으면 화면에만 '미입력'을 표시하고, 원래 값은 그대로 유지한다.
+    public String getLocationDisplay() {
+        if (location == null || location.isBlank()) {
+            return "미입력";
+        }
+        return location;
+    }
 }

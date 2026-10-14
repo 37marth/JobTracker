@@ -3,6 +3,7 @@ package com.example.jobtracker.service;
 import com.example.jobtracker.dto.CompanyRequestDto;
 import com.example.jobtracker.dto.CompanyResponseDto;
 import com.example.jobtracker.entity.Company;
+import com.example.jobtracker.exception.DuplicateCompanyException;
 import com.example.jobtracker.repository.CompanyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,9 +22,16 @@ public class CompanyService {
     // 요청 DTO를 회사 엔티티로 바꿔 DB에 저장하고, 저장 결과를 응답 DTO로 반환함.
     public CompanyResponseDto create(CompanyRequestDto companyRequestDto) {
 
-          Company target =companyRequestDto.toEntity();
-          Company savedCompany = companyRepository.save(target);
-          return CompanyResponseDto.createCompanyDto(savedCompany);
+        Company target = companyRequestDto.toEntity();
+        // 같은 회사 이름이 있으면 저장하지 않고 중복 예외를 던진다.
+        boolean isExist = companyRepository.existsByName(target.getName());
+        if (isExist) {
+            throw new DuplicateCompanyException("이미 등록된 회사입니다.");
+        }
+
+        // 중복이 아닐 때만 저장하고 정상 응답 DTO를 반환한다.
+        Company savedCompany = companyRepository.save(target);
+        return CompanyResponseDto.createCompanyDto(savedCompany);
     }
 
     // DB의 모든 회사를 조회하고, 각 엔티티를 응답 DTO로 바꿔 목록으로 반환함.

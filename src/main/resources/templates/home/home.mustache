@@ -20,13 +20,15 @@
         <div class="fields">
             <div>
                 <label for="company-name">회사 이름</label>
-                <input type="text" id="company-name">
+                <input type="text" id="company-name" aria-describedby="company-create-error">
             </div>
             <div>
-                <label for="company-location">위치</label>
+                <label for="company-location">위치(선택)</label>
                 <input type="text" id="company-location">
             </div>
         </div>
+        <!-- 실패 시 서버가 보내준 안내 문장을 이 입력 영역에 표시한다. -->
+        <p id="company-create-error" class="form-error" role="alert" hidden></p>
         <div class="actions form-actions">
             <button type="button" id="company-create-btn" class="button-primary">등록</button>
         </div>
@@ -40,7 +42,7 @@
                 <summary>
                     <strong class="company-name">{{name}}</strong>
                     <span class="summary-hint">지원내역 펼치기 · 접기</span>
-                    <span class="company-location">위치: {{#location}}{{location}}{{/location}}{{^location}}미입력{{/location}}</span>
+                    <span class="company-location">위치: {{locationDisplay}}</span>
                 </summary>
 
                 <div id="company-detail-{{id}}" class="company-detail">
@@ -60,13 +62,15 @@
                         <div class="fields">
                             <div>
                                 <label for="company-edit-name-{{id}}">회사 이름</label>
-                                <input type="text" id="company-edit-name-{{id}}" value="{{name}}">
+                                <input type="text" id="company-edit-name-{{id}}" value="{{name}}"
+                                       aria-describedby="company-update-error-{{id}}">
                             </div>
                             <div>
-                                <label for="company-edit-location-{{id}}">위치</label>
+                                <label for="company-edit-location-{{id}}">위치(선택)</label>
                                 <input type="text" id="company-edit-location-{{id}}" value="{{location}}">
                             </div>
                         </div>
+                        <p id="company-update-error-{{id}}" class="form-error" role="alert" hidden></p>
                         <div class="actions form-actions">
                             <button type="button"
                                     class="company-update-btn button-primary"
@@ -131,14 +135,16 @@
                                             <label for="application-edit-job-title-{{id}}">지원 직무</label>
                                             <input type="text"
                                                    id="application-edit-job-title-{{id}}"
-                                                   value="{{jobTitle}}">
+                                                   value="{{jobTitle}}"
+                                                   aria-describedby="application-update-error-{{id}}">
                                         </div>
                                         <div>
                                             <label for="application-edit-date-{{id}}">지원 날짜</label>
                                             <!-- 수정할 때는 오늘 날짜가 아니라 기존 지원 날짜(appliedAt)를 채운다. -->
                                             <input type="date"
                                                    id="application-edit-date-{{id}}"
-                                                   value="{{appliedAt}}">
+                                                   value="{{appliedAt}}"
+                                                   aria-describedby="application-update-error-{{id}}">
                                         </div>
                                         <div class="field-full">
                                             <label for="application-edit-memo-{{id}}">메모</label>
@@ -146,6 +152,7 @@
                                             <textarea id="application-edit-memo-{{id}}" rows="3">{{memo}}</textarea>
                                         </div>
                                     </div>
+                                    <p id="application-update-error-{{id}}" class="form-error" role="alert" hidden></p>
                                     <div class="actions form-actions">
                                         <button type="button"
                                                 class="application-update-btn button-primary"
@@ -169,17 +176,20 @@
                         <div class="fields">
                             <div>
                                 <label for="application-job-title-{{id}}">지원 직무</label>
-                                <input type="text" id="application-job-title-{{id}}">
+                                <input type="text" id="application-job-title-{{id}}"
+                                       aria-describedby="application-create-error-{{id}}">
                             </div>
                             <div>
                                 <label for="application-date-{{id}}">지원 날짜</label>
-                                <input type="date" id="application-date-{{id}}" value="{{today}}">
+                                <input type="date" id="application-date-{{id}}" value="{{today}}"
+                                       aria-describedby="application-create-error-{{id}}">
                             </div>
                             <div class="field-full">
                                 <label for="application-memo-{{id}}">메모</label>
                                 <textarea id="application-memo-{{id}}" rows="3"></textarea>
                             </div>
                         </div>
+                        <p id="application-create-error-{{id}}" class="form-error" role="alert" hidden></p>
                         <div class="actions form-actions">
                             <button type="button"
                                     class="application-create-btn button-primary"
@@ -197,6 +207,7 @@
 
 <script>
     // 기능 목차: 아래 번호와 같은 region 제목을 찾아 해당 기능만 읽는다.
+    // 00. 공통 오류 안내: 이전 문구 지우기와 서버 응답 문구 표시
     // 01. 새로고침 후 회사 펼치기
     // 02. 회사 등록
     // 03. 지원내역 등록
@@ -212,6 +223,40 @@
     // 버튼에 이벤트를 연결하는 코드는 페이지가 열릴 때 실행된다.
     // click/change 함수 안의 코드는 실제 클릭/선택 변경 후 실행된다.
 
+    //region 00. 공통 오류 안내 — 시작
+    // 새 요청이나 수정 취소 시 이전 오류 문장을 지우고 숨긴다.
+    function clearFormError(errorElement) {
+        errorElement.textContent = "";
+        errorElement.hidden = true;
+    }
+
+    // 실패 응답의 message를 해당 입력 영역에 표시한다. response가 null이면 연결 실패.
+    async function showFormError(errorElement, response) {
+        let message = "서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+        if (response !== null) {
+            message = "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+            if (response.status === 400 || response.status === 409) {
+                message = "입력값을 확인해 주세요.";
+                try {
+                    // HTTP 응답 본문의 JSON을 자바스크립트 객체로 읽는다.
+                    const errorResponse = await response.json();
+                    if (errorResponse !== null && typeof errorResponse.message === "string"
+                            && errorResponse.message.trim() !== "") {
+                        message = errorResponse.message;
+                    }
+                } catch {
+                    // JSON이나 message가 없으면 위의 기본 안내 문장을 사용한다.
+                }
+            } else if (response.status === 404) {
+                message = "대상을 찾을 수 없습니다. 화면을 새로고침해 주세요.";
+            }
+        }
+        // textContent: 문장을 HTML이 아닌 글자로 표시한다.
+        errorElement.textContent = message;
+        errorElement.hidden = false;
+    }
+    //endregion 00. 공통 오류 안내 — 끝
+
     //region 01. 새로고침 후 회사 펼치기 — 시작
     // 주소의 # 뒤에 기록된 회사가 있으면 새로고침 후에도 펼쳐서 표시한다.
     const companyToOpen = document.getElementById(window.location.hash.substring(1));
@@ -226,6 +271,8 @@
 
     // 등록 버튼을 클릭하면 이 함수를 실행한다.
     createButton.addEventListener("click",async function () {
+        const errorElement = document.getElementById("company-create-error");
+        clearFormError(errorElement);
         // 회사 이름 입력칸을 찾아 입력된 값을 읽는다.
         const name = document.querySelector("#company-name").value;
 
@@ -244,19 +291,24 @@
         const url = "/api/companies";
 
         // 회사 등록 API에 JSON을 보내고 응답을 기다린다.
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: requestBody
-        });
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: requestBody
+            });
 
-        if (response.status === 201) {
-            // 등록 성공 시 현재 페이지를 새로고침한다.
-            window.location.reload();
-        } else {
-            alert("회사 등록 실패! 응답 상태: " + response.status);
+            if (response.status === 201) {
+                // 등록 성공 시 현재 페이지를 새로고침한다.
+                window.location.reload();
+            } else {
+                await showFormError(errorElement, response);
+            }
+        } catch {
+            // 응답 자체를 받지 못한 경우에도 입력값을 유지하고 안내한다.
+            await showFormError(errorElement, null);
         }
     });
     //endregion 02. 회사 등록 — 끝
@@ -271,6 +323,8 @@
         button.addEventListener("click", function () {
             // 클릭한 버튼에 기록된 회사 ID를 읽는다.
             const companyId = button.dataset.companyId;
+            const errorElement = document.getElementById("application-create-error-" + companyId);
+            clearFormError(errorElement);
 
             // 해당 회사의 입력칸에서 값을 읽는다.
             const jobTitle = document.querySelector(
@@ -283,7 +337,8 @@
             // 지원내역 등록에 사용할 값을 객체에 담는다.
             const application = {
                 jobTitle: jobTitle,
-                appliedAt: appliedAt,
+                // 빈 날짜는 null로 보내 서버의 @NotNull 검증을 받는다.
+                appliedAt: appliedAt || null,
                 memo: memo
             };
 
@@ -300,15 +355,17 @@
                     "Content-Type": "application/json"
                 },
                 body: requestBody
-            }).then(function (response) {
+            }).then(async function (response) {
                 // 서버 응답을 받으면 상태 코드를 확인한다.
                 if (response.status === 201) {
                     // 등록한 회사의 위치를 주소에 기록하고, 최신 지원내역을 다시 표시한다.
                     window.location.hash = "company-" + companyId;
                     window.location.reload();
                 } else {
-                    alert("지원내역 등록 실패! 응답 상태: " + response.status);
+                    await showFormError(errorElement, response);
                 }
+            }).catch(function () {
+                return showFormError(errorElement, null);
             });
         });
     }
@@ -384,6 +441,7 @@
             // defaultValue: 서버가 HTML의 value에 넣어준 기존 값.
             nameInput.value = nameInput.defaultValue;
             locationInput.value = locationInput.defaultValue;
+            clearFormError(document.getElementById("company-update-error-" + companyId));
             document.getElementById("company-edit-form-" + companyId).hidden = true;
             const editButton = document.getElementById("company-edit-btn-" + companyId);
             editButton.hidden = false;
@@ -402,6 +460,8 @@
         button.addEventListener("click", function () {
             // 클릭한 버튼의 회사 ID를 읽는다.
             const companyId = button.dataset.companyId;
+            const errorElement = document.getElementById("company-update-error-" + companyId);
+            clearFormError(errorElement);
 
             // 해당 회사의 수정 입력칸에서 값을 읽는다.
             const company = {
@@ -420,14 +480,16 @@
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify(company)
-            }).then(function (response) {
+            }).then(async function (response) {
                 if (response.status === 200) {
                     // 수정된 정보를 다시 불러오고 같은 회사를 펼쳐둔다.
                     window.location.hash = "company-" + companyId;
                     window.location.reload();
                 } else {
-                    alert("회사 수정 실패! 응답 상태: " + response.status);
+                    await showFormError(errorElement, response);
                 }
+            }).catch(function () {
+                return showFormError(errorElement, null);
             });
         });
     }
@@ -474,6 +536,7 @@
             jobTitleInput.value = jobTitleInput.defaultValue;
             dateInput.value = dateInput.defaultValue;
             memoInput.value = memoInput.defaultValue;
+            clearFormError(document.getElementById("application-update-error-" + applicationId));
 
             // 입력칸을 닫고 수정 버튼을 다시 보여준다.
             document.getElementById(
@@ -495,13 +558,16 @@
             // 지원내역 ID는 수정 요청에, 회사 ID는 다시 펼칠 위치에 사용한다.
             const applicationId = button.dataset.applicationId;
             const companyId = button.dataset.companyId;
+            const errorElement = document.getElementById("application-update-error-" + applicationId);
+            clearFormError(errorElement);
 
             // 수정 입력칸에서 직무·날짜·메모를 함께 읽는다.
             const application = {
                 jobTitle: document.getElementById(
                         "application-edit-job-title-" + applicationId).value,
+                // 빈 날짜는 null로 보내 서버의 @NotNull 검증을 받는다.
                 appliedAt: document.getElementById(
-                        "application-edit-date-" + applicationId).value,
+                        "application-edit-date-" + applicationId).value || null,
                 memo: document.getElementById(
                         "application-edit-memo-" + applicationId).value
             };
@@ -514,14 +580,16 @@
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify(application)
-            }).then(function (response) {
+            }).then(async function (response) {
                 if (response.status === 200) {
                     // 저장한 결과를 다시 불러오고 같은 회사를 펼쳐둔다.
                     window.location.hash = "company-" + companyId;
                     window.location.reload();
                 } else {
-                    alert("지원내역 수정 실패! 응답 상태: " + response.status);
+                    await showFormError(errorElement, response);
                 }
+            }).catch(function () {
+                return showFormError(errorElement, null);
             });
         });
     }
