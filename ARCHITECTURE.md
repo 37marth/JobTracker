@@ -18,7 +18,7 @@ HTTP 응답 ← Controller ← Service ← 조회·저장 결과
 | 요청 DTO | 요청 본문의 입력값 전달 | CompanyRequestDto, JobApplicationRequestDto, JobApplicationStatusRequestDto |
 | 응답 DTO | 회사·지원내역에서 응답에 필요한 값 전달 | CompanyResponseDto, JobApplicationResponseDto |
 | 오류 응답 DTO | 사용자에게 보낼 오류 문장 전달 | ErrorResponseDto |
-| 예외 처리 | 검증 실패는 400, 회사 등록 중복은 409와 오류 DTO로 변환 | GlobalExceptionHandler, DuplicateCompanyException |
+| 예외 처리 | 검증 실패는 400, 회사 등록·수정 중복은 409와 오류 DTO로 변환 | GlobalExceptionHandler, DuplicateCompanyException |
 | 화면 DTO | 회사 정보와 해당 회사의 지원내역 목록을 묶어 템플릿에 전달 | CompanyViewDto |
 
 응답 DTO 변환은 Service에서 처리하고, Controller는 반환된 DTO에 HTTP 상태를 붙여 응답합니다. 회사와 지원내역의 등록·조회·수정에 적용했습니다. Repository는 계속 엔티티를 조회·저장합니다.
@@ -89,13 +89,13 @@ HTTP 응답 ← Controller ← Service ← 조회·저장 결과
 
 1. Controller가 주소의 대상 ID와 검증한 요청 DTO를 Service에 전달합니다.
 2. Service가 `findById(id)`로 기존 엔티티를 찾습니다.
-3. 대상이 있으면 엔티티의 `patch(dto)`로 값을 바꾸고 `save()`합니다.
+3. 대상이 있으면 회사는 이름 중복 검사를 먼저 수행합니다. 중복이 아니면 엔티티의 `patch(dto)`로 값을 바꾸고 `save()`합니다. 지원내역은 회사 이름 중복 검사 없이 수정·저장합니다.
 4. 대상이 없으면 null을 반환하고, Controller가 본문 없는 404로 응답합니다.
 5. Service에서 회사를 `CompanyResponseDto`, 지원내역을 `JobApplicationResponseDto`로 변환합니다. Controller는 해당 결과를 200 응답에 담습니다.
 
 회사는 이름·위치, 지원내역은 직무·날짜·메모를 변경합니다. 수정할 때 기존 ID와 회사 연결은 유지합니다. 수정 요청 DTO는 등록용과 같으며, 생략한 값을 자동으로 기존 값으로 유지하지 않습니다. 선택 필드인 위치·메모는 생략하거나 null로 보내면 비워집니다.
 
-회사 수정에는 이름 중복 검사가 아직 없습니다. 다음 작업에서 수정하는 회사 자신을 제외하고 다른 회사의 이름과 겹치는지 검사합니다.
+회사 수정은 `existsByNameAndIdNot(companyRequestDto.getName(), id)`로 같은 이름을 가진 다른 회사가 있는지 확인합니다. 기존 엔티티의 이름이 아닌 요청 DTO의 새 이름을 검사하며, 현재 회사 ID는 제외합니다. 중복이면 `DuplicateCompanyException`을 던져 `patch()`와 저장을 실행하지 않고, 기존 예외 처리기를 통해 409와 안내 문장을 반환합니다. 따라서 자기 이름을 그대로 두고 위치만 바꾸는 것은 허용합니다.
 
 ### 지원 상태 변경
 
@@ -138,7 +138,7 @@ API 테스트 요청은 `http/` 아래에서 회사 CRUD, 지원내역 CRUD, 입
 
 화면의 회사·지원내역 등록·수정은 400 또는 409 응답 본문의 JSON에서 `message`를 읽고, 해당 입력 영역에 `textContent`로 표시합니다. 실패할 때는 새로고침하지 않아 입력값과 펼침 상태가 유지됩니다. 새 요청 전과 수정 취소 시 이전 문구를 지웁니다. 빈 날짜는 null로 보내 `@NotNull` 검증을 받으며, 오류 문구가 없거나 JSON을 읽지 못하면 기본 안내를 사용합니다. 404·서버 오류·연결 실패도 기본 안내로 처리합니다. 상태 변경·삭제 화면의 기존 확인창과 실패 알림은 유지합니다.
 
-필수값 오류 안내는 실제 브라우저에서 확인했습니다. 중복 등록의 409 메시지 표시는 공통 JavaScript 함수 검사까지 통과했으며, 실제 DB·브라우저 검증은 남아 있습니다. 회사 수정의 중복 검사와 등록·수정의 실제 화면 확인을 마친 뒤 현재 버전을 마무리합니다.
+필수값 오류 안내는 실제 브라우저에서 확인했습니다. 2026-10-15 실행 중인 서버의 실제 API로 중복 등록·수정의 409와 안내 문장, 실패한 수정 뒤 기존 이름·위치 유지를 확인했습니다. 자기 이름을 유지한 위치 수정과 새 이름으로 수정은 200이었고 GET 재조회에서 반영됐습니다. 테스트 회사 두 개를 정리한 뒤 원래 회사 목록과 동일함을 확인했습니다. 이 검증은 API와 재조회이며 DB 직접 조회나 브라우저 자동 조작은 아닙니다. 수정 화면은 사용자 수동 확인을 마쳤고, 중복 등록의 화면 안내는 공통 JavaScript 함수 검사까지 확인했습니다. 다음은 중복 등록 안내를 실제 화면에서 확인하고 현재 버전을 마무리하는 것입니다.
 
 지원내역 등록에서 존재하지 않는 회사를 조회하면 `ResponseStatusException`에 `HttpStatus.NOT_FOUND`를 지정해 404로 응답합니다. 예외가 발생하면 지원내역 생성·저장으로 진행하지 않습니다. API로 404 응답과 이후 빈 지원내역 목록, 기존 회사·지원내역 유지를 확인했습니다.
 

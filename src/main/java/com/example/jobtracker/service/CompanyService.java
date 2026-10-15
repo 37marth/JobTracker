@@ -46,6 +46,10 @@ public class CompanyService {
     public CompanyResponseDto update(Long id, CompanyRequestDto companyRequestDto) {
         Company target = companyRepository.findById(id).orElse(null);
         if (target != null) {
+            boolean isExist = companyRepository.existsByNameAndIdNot(companyRequestDto.getName(), id);
+            if (isExist) {
+                throw new DuplicateCompanyException("이미 등록된 회사입니다.");
+            }
             target.patch(companyRequestDto);
             Company savedCompany = companyRepository.save(target);
             return CompanyResponseDto.createCompanyDto(savedCompany);

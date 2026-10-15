@@ -11,4 +11,6 @@ public interface CompanyRepository extends JpaRepository<Company,Long> {
     List<Company> findAllByOrderByIdAsc();
     // 같은 이름의 회사가 이미 등록되어 있는지 확인한다.
     boolean existsByName(String name);
+    // 수정 중인 회사를 제외하고 같은 이름의 회사가 있는지 확인한다.
+    boolean existsByNameAndIdNot(String name, Long id);
 }
