@@ -202,6 +202,10 @@
         {{^companies}}
             <p class="empty-state">등록된 회사가 없습니다.</p>
         {{/companies}}
+        <p>현재 {{currentPage}}페이지 / 전체 {{companiesTotalPages}}페이지</p>
+        {{#totalPages}}   <!-- totalPages 목록의 반복 시작 -->
+            <a href="/?page={{requestPageNumber}}">{{displayNumber}}</a>
+        {{/totalPages}}   <!-- 반복 끝 -->
     </section>
 </main>
 

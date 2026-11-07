@@ -6,12 +6,15 @@ import com.example.jobtracker.entity.Company;
 import com.example.jobtracker.exception.DuplicateCompanyException;
 import com.example.jobtracker.repository.CompanyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.example.jobtracker.dto.CompanyResponseDto.createCompanyDto;
+import static com.example.jobtracker.dto.CompanyResponseDto.createCompanyResponseDto;
 
 @Service
 public class CompanyService {
@@ -31,15 +34,29 @@ public class CompanyService {
 
         // 중복이 아닐 때만 저장하고 정상 응답 DTO를 반환한다.
         Company savedCompany = companyRepository.save(target);
-        return CompanyResponseDto.createCompanyDto(savedCompany);
+        return CompanyResponseDto.createCompanyResponseDto(savedCompany);
     }
 
     // DB의 모든 회사를 조회하고, 각 엔티티를 응답 DTO로 바꿔 목록으로 반환함.
     public List<CompanyResponseDto> index() {
         List<Company> companies = companyRepository.findAllByOrderByIdAsc();
         return companies.stream()
-                .map(company -> createCompanyDto(company))
+                .map(company -> createCompanyResponseDto(company))
                 .collect(Collectors.toList());
+    }
+
+    // 회사 목록을 한 페이지에 10개씩 조회한다.
+    public Page<CompanyResponseDto> indexPage(int page) { // page는 0부터 시작하는 조회할 페이지 번호.
+
+        // 전달받은 페이지 번호와 한 페이지의 개수를 조회 조건으로 만든다.
+        PageRequest pageRequest = PageRequest.of(page, 10, Sort.by("id").ascending()); // 최대 10개씩, ID 오름차순으로 조회.
+
+        // 조회 조건에 맞는 회사들을 페이지 형태로 가져온다.
+        Page<Company> companies = companyRepository.findAll(pageRequest);
+
+        // 회사 엔티티를 응답 DTO로 바꾸고, 페이지 정보를 유지해서 반환한다.
+        return companies.map(company -> createCompanyResponseDto(company));
+
     }
 
     // ID로 회사를 찾아 수정·저장한 뒤 응답 DTO를 반환함. 대상이 없으면 null을 반환함.
@@ -52,7 +69,7 @@ public class CompanyService {
             }
             target.patch(companyRequestDto);
             Company savedCompany = companyRepository.save(target);
-            return CompanyResponseDto.createCompanyDto(savedCompany);
+            return CompanyResponseDto.createCompanyResponseDto(savedCompany);
         }
         return null;
     }
@@ -66,4 +83,6 @@ public class CompanyService {
         }
         return target;
     }
+
+
 }

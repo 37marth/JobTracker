@@ -12,7 +12,7 @@ public class CompanyResponseDto {
     private String location;
 
     // 회사 엔티티의 ID, 이름, 위치를 응답용 DTO에 옮겨 담음.
-    public static CompanyResponseDto  createCompanyDto(Company company){
+    public static CompanyResponseDto createCompanyResponseDto(Company company){
         return new CompanyResponseDto(
                 company.getId(),
                 company.getName(),

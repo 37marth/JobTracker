@@ -1,2 +1,11 @@
 INSERT INTO company (name, location) VALUES ('테스트 회사1', '성남');
 INSERT INTO company (name, location) VALUES ('테스트 회사2', '서울');
+INSERT INTO company (name, location) VALUES ('테스트 회사3', '서울');
+INSERT INTO company (name, location) VALUES ('테스트 회사4', '서울');
+INSERT INTO company (name, location) VALUES ('테스트 회사5', '서울');
+INSERT INTO company (name, location) VALUES ('테스트 회사6', '서울');
+INSERT INTO company (name, location) VALUES ('테스트 회사7', '서울');
+INSERT INTO company (name, location) VALUES ('테스트 회사8', '서울');
+INSERT INTO company (name, location) VALUES ('테스트 회사9', '서울');
+INSERT INTO company (name, location) VALUES ('테스트 회사10', '서울');
+INSERT INTO company (name, location) VALUES ('테스트 회사11', '서울');
