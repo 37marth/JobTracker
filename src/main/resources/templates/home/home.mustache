@@ -203,9 +203,27 @@
             <p class="empty-state">등록된 회사가 없습니다.</p>
         {{/companies}}
         <p>현재 {{currentPage}}페이지 / 전체 {{companiesTotalPages}}페이지</p>
+
+        {{#hasFirstPage}}
+            <a href="/?page=0">&lt;&lt;</a>
+        {{/hasFirstPage}}
+
+        {{#hasPreviousGroup}}
+            <a href="/?page={{previousGroupPage}}">&lt;</a>
+        {{/hasPreviousGroup}}
+
         {{#totalPages}}   <!-- totalPages 목록의 반복 시작 -->
             <a href="/?page={{requestPageNumber}}">{{displayNumber}}</a>
         {{/totalPages}}   <!-- 반복 끝 -->
+
+        {{#hasNextGroup}}
+            <a href="/?page={{nextGroupPage}}">&gt;</a>
+        {{/hasNextGroup}}
+
+        {{#hasLastPage}}
+            <a href="/?page={{goToLastPage}}">&gt;&gt;</a>
+        {{/hasLastPage}}
+
     </section>
 </main>
 
@@ -305,8 +323,8 @@
             });
 
             if (response.status === 201) {
-                // 등록 성공 시 현재 페이지를 새로고침한다.
-                window.location.reload();
+                // 새로 등록한 회사가 맨 앞에 보이도록 첫 페이지로 이동한다.
+                window.location.href = "/?page=0";
             } else {
                 await showFormError(errorElement, response);
             }

@@ -31,9 +31,9 @@ HTTP 응답 ← Controller ← Service ← 조회·저장 결과
 
 응답 DTO 변환은 Service에서 처리하고, Controller는 반환된 DTO에 HTTP 상태를 붙여 응답합니다. 회사와 지원내역의 등록·조회·수정에 적용했습니다. Repository는 계속 엔티티를 조회·저장합니다.
 
-`HomeController`는 `@RequestParam(defaultValue = "0") int page`로 페이지 번호를 받고 `CompanyService.indexPage(page)`를 호출합니다. 서비스는 `PageRequest.of(page, 10, Sort.by("id").ascending())`를 기본 제공 `findAll(Pageable)`에 전달합니다. `Page.map()`으로 회사 엔티티를 응답 DTO로 변환하고 페이지 정보를 유지합니다. 컨트롤러는 `getContent()`의 회사들만 지원내역과 묶어 `CompanyViewDto`로 전달합니다. API의 전체 회사 목록 조회는 기존 `index()`를 유지합니다.
+`HomeController`는 `@RequestParam(defaultValue = "0") int page`로 페이지 번호를 받고 `CompanyService.indexPage(page)`를 호출합니다. 서비스는 `PageRequest.of(page, 5, Sort.by("id").descending())`를 기본 제공 `findAll(Pageable)`에 전달합니다. `Page.map()`으로 회사 엔티티를 응답 DTO로 변환하고 페이지 정보를 유지합니다. 컨트롤러는 `getContent()`의 회사들만 지원내역과 묶어 `CompanyViewDto`로 전달합니다. API의 전체 회사 목록 조회는 기존 `index()`를 유지합니다.
 
-`getTotalPages()`로 전체 페이지 수를 얻고 반복문에서 `PageNumberDto(표시 번호, 표시 번호 - 1)` 목록을 만듭니다. Model의 `totalPages`는 이 DTO 목록이고 `companiesTotalPages`는 전체 페이지 수인 정수입니다. Mustache는 `{{#totalPages}}` 안에서 `displayNumber`를 표시하고 `requestPageNumber`로 링크를 만듭니다. 번호 5개 묶음과 화살표 이동은 다음 단계이며 [진행 기록](docs/company-pagination.md)을 따릅니다.
+`getTotalPages()`로 전체 페이지 수를 얻습니다. 현재 묶음의 시작은 `(page / 5) * 5 + 1`, 끝은 `(page / 5) * 5 + 5`이며, 반복문이 묶음 끝과 실제 전체 페이지 수를 함께 제한합니다. `PageNumberDto(표시 번호, 표시 번호 - 1)` 목록을 만들어 Mustache가 반복 출력합니다. 이전 묶음 요청 번호는 `startPage - 6`, 다음 묶음은 `endPage`, 마지막은 `companiesTotalPages - 1`입니다. Model의 boolean으로 각 화살표 표시 여부를 전달합니다.
 
 `CompanyViewDto`는 화면 전달용이며, API는 기존 `CompanyResponseDto`와 `JobApplicationResponseDto`를 사용합니다. `JobApplicationStatus.getDisplayName()`은 한글 이름을 반환하는 메서드이며, 현재 상태 드롭다운은 HTML에 enum 이름과 한글 선택지를 직접 작성합니다. API와 DB에는 enum 이름을 사용합니다. 회사와 지원내역 등록 버튼은 `fetch()`로 기존 등록 API를 호출한 뒤 201 응답이면 페이지를 새로고침합니다.
 
@@ -41,7 +41,7 @@ HTTP 응답 ← Controller ← Service ← 조회·저장 결과
 
 지원내역 입력칸과 버튼에는 회사 ID를 포함한 HTML ID와 `data-company-id`를 사용합니다. 클릭한 버튼의 회사 ID로 해당 회사의 입력값을 읽어 `POST /api/companies/{companyId}/job-applications`에 보냅니다. 등록 성공 시 주소 끝에 `#company-회사ID`를 기록하며, 페이지를 다시 불러오면 그 ID의 `<details>`를 펼쳐 새 지원내역을 표시합니다. 응답 JSON으로 목록 HTML을 직접 만드는 방식은 사용하지 않습니다.
 
-현재 첫 화면은 회사 최대 10개와 그 회사별 지원내역을 조회합니다. 회사 안의 지원내역은 아직 나누지 않습니다. 2026-11-08 실제 서버 응답에서 첫 페이지 10개·두 번째 페이지 1개와 번호 링크를 확인했고 사용자가 링크 표시 화면을 확인했습니다. 기존 오류 응답 테스트와 실제 페이징 확인은 구분합니다.
+현재 첫 화면은 회사 최대 5개와 그 회사별 지원내역을 조회합니다. 회사 안의 지원내역은 아직 나누지 않습니다. 2026-11-09 실제 26개 회사의 1~6페이지와 화살표 이동 주소를 확인했습니다. HomePaginationTest는 실제 서비스·컨트롤러·템플릿과 조회 대역을 사용해 13개 예시를 검증했고, 기존 오류 테스트 7건도 통과했습니다. 가운데 배치와 현재 번호 강조, 빈 목록·범위 밖 번호·마지막 항목 삭제 후 페이지 처리는 다음 작업입니다.
 
 ## 데이터 관계
 
@@ -172,6 +172,6 @@ API 테스트 요청은 `http/` 아래에서 회사 CRUD, 지원내역 CRUD, 입
 
 ## 개발 DB 설정
 
-현재 `ddl-auto=create`는 서버 시작 시 JPA가 관리하는 테이블을 삭제·재생성합니다. `spring.jpa.defer-datasource-initialization=true`와 `spring.sql.init.mode=always` 설정으로 테이블 생성 후 `data.sql`이 테스트 회사 11개를 등록합니다. 로컬 개발용 DB에서 사용하며, 데이터 유지가 필요하면 `update`로 변경하고 SQL 초기화는 `never`로 끕니다.
+현재 `ddl-auto=create`는 서버 시작 시 JPA가 관리하는 테이블을 삭제·재생성합니다. `spring.jpa.defer-datasource-initialization=true`와 `spring.sql.init.mode=always` 설정으로 테이블 생성 후 `data.sql`이 테스트 회사 26개를 등록합니다. 로컬 개발용 DB에서 사용하며, 데이터 유지가 필요하면 `update`로 변경하고 SQL 초기화는 `never`로 끕니다.
 
 접속 비밀번호는 소스에 저장하지 않고 환경변수 `DB_PASSWORD`로 전달합니다. 구체적인 실행 절차와 요청 예시는 [README](README.md)를 참고합니다.

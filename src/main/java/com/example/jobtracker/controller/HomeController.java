@@ -27,7 +27,7 @@ public class HomeController {
     // 회사별 지원내역까지 준비해 Mustache가 첫 화면의 HTML을 만들도록 전달함.
     @GetMapping("/")
     public String index(
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "0") int page,//현재보고있는 페이지
             Model model) {
         // 1.전달받은 페이지 번호로 회사 목록과 페이지 정보를 조회한다.
         Page<CompanyResponseDto> companyPage = companyService.indexPage(page);
@@ -37,10 +37,19 @@ public class HomeController {
         //토탈페이지수
         int companiesTotalPages =  companyPage.getTotalPages();
 
+        // 현재 묶음에서 화면에 표시할 첫 번호와 끝 번호.
+        int startPage = (page / 5) * 5 + 1;
+        int endPage = (page / 5) * 5 + 5;
+
+
         // 1. 페이지 링크 정보를 담을 빈 DTO 목록을 만든다.
         List<PageNumberDto> totalPages = new ArrayList<>();
-        // 2. 번호를 1부터 시작해서 전체 페이지 수까지 반복한다.
-        for(int i = 1; i <= companiesTotalPages; i++){
+        // 2. 현재 페이지가 속한 묶음의 첫 표시 번호부터 반복한다.
+        // page / 5: 정수 나눗셈으로 나머지를 버려 묶음 번호를 구한다(0, 1, 2...).
+        // * 5: 그 묶음의 시작 위치로 돌아간다. + 1: 화면 번호는 1부터 표시한다.
+        // 예: 주소의 page=12(화면 13페이지) → 12 / 5 = 2 → 2 * 5 + 1 = 11.
+        for(int i = startPage; i <= endPage && i<=companiesTotalPages; i++){
+
             // 3. 반복할 때마다 현재 번호를 목록에 추가한다.
             totalPages.add(new PageNumberDto(i,i-1));
         }
@@ -66,6 +75,28 @@ public class HomeController {
         model.addAttribute("companiesTotalPages", companiesTotalPages);
 
         model.addAttribute("totalPages", totalPages);
+
+        // 이전 묶음의 첫 페이지로 이동할 요청 번호
+        model.addAttribute("previousGroupPage", startPage-6);
+        // 현재 묶음이 1페이지부터 시작하지 않으면 이전 묶음이 있다.
+        model.addAttribute("hasPreviousGroup", startPage > 1);
+
+        // 다음 묶음의 첫 페이지로 이동할 요청 번호.
+        model.addAttribute("nextGroupPage", endPage);
+
+        // 묶음 끝보다 실제 전체 페이지 수가 크면 다음 묶음이 있다.
+        model.addAttribute("hasNextGroup", endPage < companiesTotalPages);
+
+        // 첫 페이지를 보고 있지 않을 때 처음으로 가는 링크를 표시한다.
+        model.addAttribute("hasFirstPage", page > 0);
+
+        // 마지막 페이지를 보고 있지 않을 때 마지막으로 가는 링크를 표시한다.
+        model.addAttribute("hasLastPage", page < companiesTotalPages - 1);
+
+        //마지막페이지 전용
+        model.addAttribute("goToLastPage", companiesTotalPages-1);
+
+
 
         // 4. 회사별 지원내역이 포함된 HTML을 만들 템플릿 이름을 반환한다.
         return "home/home";
