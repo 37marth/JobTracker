@@ -202,27 +202,35 @@
         {{^companies}}
             <p class="empty-state">등록된 회사가 없습니다.</p>
         {{/companies}}
-        <p>현재 {{currentPage}}페이지 / 전체 {{companiesTotalPages}}페이지</p>
+        <!-- nav: 페이지 이동 영역. pagination 클래스에 연결된 CSS가 가운데 배치한다. -->
+        {{#hasPages}}
+        <nav class="pagination" aria-label="회사 목록 페이지">
+            <p class="pagination-summary">현재 {{currentPage}}페이지 / 전체 {{companiesTotalPages}}페이지</p>
+            <div class="pagination-links">
+                {{#hasFirstPage}}
+                    <a href="/?page=0" class="page-link page-arrow" aria-label="첫 페이지">&lt;&lt;</a>
+                {{/hasFirstPage}}
 
-        {{#hasFirstPage}}
-            <a href="/?page=0">&lt;&lt;</a>
-        {{/hasFirstPage}}
+                {{#hasPreviousGroup}}
+                    <a href="/?page={{previousGroupPage}}" class="page-link page-arrow" aria-label="이전 묶음 첫 페이지">&lt;</a>
+                {{/hasPreviousGroup}}
 
-        {{#hasPreviousGroup}}
-            <a href="/?page={{previousGroupPage}}">&lt;</a>
-        {{/hasPreviousGroup}}
+                {{#totalPages}}
+                    <!-- 반복 안의 currentPage는 현재 DTO의 boolean 값이다. true인 번호만 강조한다. -->
+                    <a href="/?page={{requestPageNumber}}"
+                       class="page-link{{#currentPage}} is-current{{/currentPage}}"{{#currentPage}} aria-current="page"{{/currentPage}}>{{displayNumber}}</a>
+                {{/totalPages}}
 
-        {{#totalPages}}   <!-- totalPages 목록의 반복 시작 -->
-            <a href="/?page={{requestPageNumber}}">{{displayNumber}}</a>
-        {{/totalPages}}   <!-- 반복 끝 -->
+                {{#hasNextGroup}}
+                    <a href="/?page={{nextGroupPage}}" class="page-link page-arrow" aria-label="다음 묶음 첫 페이지">&gt;</a>
+                {{/hasNextGroup}}
 
-        {{#hasNextGroup}}
-            <a href="/?page={{nextGroupPage}}">&gt;</a>
-        {{/hasNextGroup}}
-
-        {{#hasLastPage}}
-            <a href="/?page={{goToLastPage}}">&gt;&gt;</a>
-        {{/hasLastPage}}
+                {{#hasLastPage}}
+                    <a href="/?page={{goToLastPage}}" class="page-link page-arrow" aria-label="마지막 페이지">&gt;&gt;</a>
+                {{/hasLastPage}}
+            </div>
+        </nav>
+        {{/hasPages}}
 
     </section>
 </main>

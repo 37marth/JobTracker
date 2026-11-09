@@ -260,7 +260,69 @@ summary::marker {
     overflow-wrap: anywhere;
 }
 
-/* 7. 모바일: 입력칸과 상태 선택을 한 줄씩 배치 */
+/* 7. 페이지 이동: 요약과 번호·화살표를 회사 목록 아래 가운데 배치한다. */
+.pagination {
+    margin-top: 28px;
+    text-align: center;
+}
+
+.pagination-summary {
+    margin-bottom: 12px;
+    color: #58677c;
+    font-size: 14px;
+}
+
+.pagination-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* a 태그의 이동 기능에 버튼처럼 보이는 모양을 입힌다. */
+.page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 6px 10px;
+    border: 1px solid #c7d2e0;
+    border-radius: 8px;
+    background: #fff;
+    color: #263b56;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.page-link:hover {
+    border-color: #3158c7;
+    background: #eef3f9;
+}
+
+.page-link:focus-visible {
+    outline: 3px solid #3158c7;
+    outline-offset: 3px;
+}
+
+/* currentPage가 true일 때 Mustache가 붙인 is-current 클래스의 모양. */
+.page-link.is-current {
+    border-color: #3158c7;
+    background: #3158c7;
+    color: #fff;
+    font-weight: 700;
+}
+
+.page-link.is-current:hover {
+    background: #24449d;
+}
+
+.page-arrow {
+    color: #58677c;
+}
+
+/* 8. 모바일: 입력칸과 상태 선택을 한 줄씩 배치 */
 @media (max-width: 600px) {
     .app {
         padding: 24px 16px 40px;
@@ -289,5 +351,16 @@ summary::marker {
     .summary-hint {
         display: block;
         margin-left: 0;
+    }
+
+    .pagination-links {
+        gap: 4px;
+    }
+
+    .page-link {
+        min-width: 30px;
+        min-height: 38px;
+        padding: 6px;
+        font-size: 13px;
     }
 }

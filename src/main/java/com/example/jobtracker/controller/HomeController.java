@@ -29,13 +29,23 @@ public class HomeController {
     public String index(
             @RequestParam(defaultValue = "0") int page,//현재보고있는 페이지
             Model model) {
+
+        // 음수 페이지 번호가 들어오면 첫 페이지 주소로 다시 보낸다.
+        if (page < 0) {
+            return "redirect:/?page=0";
+        }
+
         // 1.전달받은 페이지 번호로 회사 목록과 페이지 정보를 조회한다.
         Page<CompanyResponseDto> companyPage = companyService.indexPage(page);
+
 
         // 페이지 결과에서 회사 목록을 꺼낸다.
         List<CompanyResponseDto> companies = companyPage.getContent();
         //토탈페이지수
         int companiesTotalPages =  companyPage.getTotalPages();
+        if (companiesTotalPages > 0 && page >= companiesTotalPages ) {
+            return "redirect:/?page="+(companiesTotalPages-1);
+        }
 
         // 현재 묶음에서 화면에 표시할 첫 번호와 끝 번호.
         int startPage = (page / 5) * 5 + 1;
@@ -50,8 +60,9 @@ public class HomeController {
         // 예: 주소의 page=12(화면 13페이지) → 12 / 5 = 2 → 2 * 5 + 1 = 11.
         for(int i = startPage; i <= endPage && i<=companiesTotalPages; i++){
 
-            // 3. 반복할 때마다 현재 번호를 목록에 추가한다.
-            totalPages.add(new PageNumberDto(i,i-1));
+            // i는 내가 눈으로 보고 있는 화면의 페이지 번호이므로, 현재 요청 번호에 1을 더한 값과 비교한다.
+            boolean current = i == page + 1;
+            totalPages.add(new PageNumberDto(i, i - 1, current));
         }
 
 
@@ -95,6 +106,9 @@ public class HomeController {
 
         //마지막페이지 전용
         model.addAttribute("goToLastPage", companiesTotalPages-1);
+
+        //페이지가 존재하는가?(하나라도 회사가 있는가)
+        model.addAttribute("hasPages", companiesTotalPages > 0);
 
 
 

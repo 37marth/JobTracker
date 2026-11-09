@@ -33,7 +33,7 @@ HTTP 응답 ← Controller ← Service ← 조회·저장 결과
 
 `HomeController`는 `@RequestParam(defaultValue = "0") int page`로 페이지 번호를 받고 `CompanyService.indexPage(page)`를 호출합니다. 서비스는 `PageRequest.of(page, 5, Sort.by("id").descending())`를 기본 제공 `findAll(Pageable)`에 전달합니다. `Page.map()`으로 회사 엔티티를 응답 DTO로 변환하고 페이지 정보를 유지합니다. 컨트롤러는 `getContent()`의 회사들만 지원내역과 묶어 `CompanyViewDto`로 전달합니다. API의 전체 회사 목록 조회는 기존 `index()`를 유지합니다.
 
-`getTotalPages()`로 전체 페이지 수를 얻습니다. 현재 묶음의 시작은 `(page / 5) * 5 + 1`, 끝은 `(page / 5) * 5 + 5`이며, 반복문이 묶음 끝과 실제 전체 페이지 수를 함께 제한합니다. `PageNumberDto(표시 번호, 표시 번호 - 1)` 목록을 만들어 Mustache가 반복 출력합니다. 이전 묶음 요청 번호는 `startPage - 6`, 다음 묶음은 `endPage`, 마지막은 `companiesTotalPages - 1`입니다. Model의 boolean으로 각 화살표 표시 여부를 전달합니다.
+`getTotalPages()`로 전체 페이지 수를 얻습니다. 현재 묶음의 시작은 `(page / 5) * 5 + 1`, 끝은 `(page / 5) * 5 + 5`이며, 반복문이 묶음 끝과 실제 전체 페이지 수를 함께 제한합니다. `PageNumberDto(표시 번호, 표시 번호 - 1, 현재 페이지 여부)` 목록을 만들어 Mustache가 반복 출력합니다. 현재 번호에는 `is-current` 클래스와 `aria-current="page"`를 붙입니다. 이전 묶음 요청 번호는 `startPage - 6`, 다음 묶음은 `endPage`, 마지막은 `companiesTotalPages - 1`입니다. Model의 boolean으로 각 화살표 표시 여부를 전달합니다.
 
 `CompanyViewDto`는 화면 전달용이며, API는 기존 `CompanyResponseDto`와 `JobApplicationResponseDto`를 사용합니다. `JobApplicationStatus.getDisplayName()`은 한글 이름을 반환하는 메서드이며, 현재 상태 드롭다운은 HTML에 enum 이름과 한글 선택지를 직접 작성합니다. API와 DB에는 enum 이름을 사용합니다. 회사와 지원내역 등록 버튼은 `fetch()`로 기존 등록 API를 호출한 뒤 201 응답이면 페이지를 새로고침합니다.
 
@@ -41,7 +41,9 @@ HTTP 응답 ← Controller ← Service ← 조회·저장 결과
 
 지원내역 입력칸과 버튼에는 회사 ID를 포함한 HTML ID와 `data-company-id`를 사용합니다. 클릭한 버튼의 회사 ID로 해당 회사의 입력값을 읽어 `POST /api/companies/{companyId}/job-applications`에 보냅니다. 등록 성공 시 주소 끝에 `#company-회사ID`를 기록하며, 페이지를 다시 불러오면 그 ID의 `<details>`를 펼쳐 새 지원내역을 표시합니다. 응답 JSON으로 목록 HTML을 직접 만드는 방식은 사용하지 않습니다.
 
-현재 첫 화면은 회사 최대 5개와 그 회사별 지원내역을 조회합니다. 회사 안의 지원내역은 아직 나누지 않습니다. 2026-11-09 실제 26개 회사의 1~6페이지와 화살표 이동 주소를 확인했습니다. HomePaginationTest는 실제 서비스·컨트롤러·템플릿과 조회 대역을 사용해 13개 예시를 검증했고, 기존 오류 테스트 7건도 통과했습니다. 가운데 배치와 현재 번호 강조, 빈 목록·범위 밖 번호·마지막 항목 삭제 후 페이지 처리는 다음 작업입니다.
+현재 첫 화면은 회사 최대 5개와 그 회사별 지원내역을 조회합니다. 회사 안의 지원내역은 아직 나누지 않습니다. 페이지 영역은 CSS로 가운데 배치하며 `hasPages`가 false인 빈 목록에서는 숨깁니다. 음수는 조회 전에 첫 페이지로 리다이렉트하고, 전체 페이지 수가 0보다 크면서 요청 번호가 전체 페이지 수 이상이면 마지막 요청 번호로 보냅니다. 회사가 없을 때는 마지막 번호 -1로 보내지 않습니다. 같은 범위 검사로 삭제 후 사라진 마지막 페이지도 보정합니다.
+
+2026-11-10 사용자가 실제 화면에서 현재 번호 강조, 음수 -999의 첫 페이지 이동, 999의 마지막 페이지 이동, 회사 삭제 후 6페이지에서 새 마지막인 5페이지로 이동하는 결과를 확인했습니다. 빈 목록의 안내·페이지 영역 숨김은 실제 컨트롤러와 템플릿에 DB 조회 대역을 넣은 자동 테스트로 확인했습니다. 테스트 코드와 CSS는 AI의 검증·화면 작업이며 사용자의 독립 테스트 작성 경험과 구분합니다.
 
 ## 데이터 관계
 
