@@ -41,8 +41,10 @@ public class HomeController {
 
         // 페이지 결과에서 회사 목록을 꺼낸다.
         List<CompanyResponseDto> companies = companyPage.getContent();
-        //토탈페이지수
+
+        //토탈 페이지수
         int companiesTotalPages =  companyPage.getTotalPages();
+
         if (companiesTotalPages > 0 && page >= companiesTotalPages ) {
             return "redirect:/?page="+(companiesTotalPages-1);
         }
