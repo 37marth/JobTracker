@@ -49,4 +49,18 @@ public class GlobalExceptionHandler {
         // 기존 회사와 중복되므로 409 응답과 오류 메시지를 보낸다.
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponseDto);
     }
+
+    @ExceptionHandler(DuplicateLoginIdException.class)
+    public ResponseEntity<ErrorResponseDto> handleDuplicateLoginId(
+            DuplicateLoginIdException exception) {
+
+        // 서비스에서 예외에 담아 보낸 메시지를 꺼낸다.
+        String message = exception.getMessage();
+
+        // 메시지를 오류 응답 DTO에 담는다.
+        ErrorResponseDto errorResponseDto = new ErrorResponseDto(message);
+
+        // 기존 회사와 중복되므로 409 응답과 오류 메시지를 보낸다.
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponseDto);
+    }
 }

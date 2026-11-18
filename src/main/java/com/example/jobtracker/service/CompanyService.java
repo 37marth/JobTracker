@@ -49,7 +49,7 @@ public class CompanyService {
     public Page<CompanyResponseDto> indexPage(int page) { // page는 0부터 시작하는 조회할 페이지 번호.
 
         // 전달받은 페이지 번호와 한 페이지의 개수를 조회 조건으로 만든다.
-        PageRequest pageRequest = PageRequest.of(page, 5, Sort.by("id").descending()); // 최대 5개씩, ID 내림차순으로 조회.
+        PageRequest pageRequest = PageRequest.of(page, 5, Sort.by("id").descending  ()); // 최대 5개씩, ID 내림차순으로 조회.
 
         // 조회 조건에 맞는 회사들을 페이지 형태로 가져온다.
         Page<Company> companies = companyRepository.findAll(pageRequest);
