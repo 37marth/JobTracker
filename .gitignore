@@ -43,3 +43,10 @@ out/
 # 개인 학습 문서
 /docs/learning-comparison.md
 /docs/portfolio-notes.md
+
+# 내부 작업 기록·진도 문서 (사용자와 AI만 봄, 2026-11-21)
+/docs/development-log.md
+/docs/roadmap.md
+/docs/member-login-plan.md
+/docs/company-pagination.md
+/docs/extension-import-plan.md

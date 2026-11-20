@@ -55,7 +55,7 @@ Java 17 · Spring Boot 4.1.1 (Web MVC, Data JPA, Validation) · PostgreSQL · Mu
 | DELETE | `/api/job-applications/{id}` | 지원내역 삭제 | 204 |
 | POST | `/api/members/signup` | 회원가입 | 201 |
 
-요청 예시와 오류 응답 형식은 [개발·검증 기록](docs/development-log.md#api)에 있습니다. IntelliJ HTTP Client용 테스트 요청은 [`http/`](http) 폴더에 있습니다.
+잘못된 입력은 400, 없는 대상은 404, 중복은 409와 함께 `{"message": "안내 문장"}`을 응답합니다. IntelliJ HTTP Client용 요청 예시와 테스트 순서는 [`http/`](http) 폴더에 있습니다.
 
 ## 실행 방법
 
@@ -77,8 +77,6 @@ Java 17 · Spring Boot 4.1.1 (Web MVC, Data JPA, Validation) · PostgreSQL · Mu
 - [ ] 데이터 보존 설정과 첫 배포
 - [ ] 구글 소셜 로그인 (첫 배포 이후)
 
-세부 순서와 완료 기준: [진행 계획](docs/roadmap.md) · [회원 기능 계획](docs/member-login-plan.md)
-
 ## 알려진 한계
 
 - 로그인 전이라 모든 데이터가 한 사람 기준으로 저장됩니다.
@@ -92,4 +90,4 @@ AI(ChatGPT Codex, Claude)에게 개념 설명과 코드 리뷰를 받으며, 백
 - **직접 작성**: 엔티티·DTO·리포지토리·서비스·컨트롤러의 CRUD, 중복 검사, 페이징 계산과 경계 처리, 회원가입 서비스·컨트롤러
 - **AI 주도로 함께 작성**: 화면 JavaScript(`fetch`로 API를 호출하고 화면을 갱신하는 부분)
 - **AI가 작성**: 화면 스타일(CSS), 자동 테스트 코드(`HomePaginationTest` 등)
-- 날짜별 검증 결과와 확인 방법(수동 확인 / API 재조회 / 자동 테스트 구분)은 [개발·검증 기록](docs/development-log.md)에 남겼습니다.
+- 기능마다 확인 방법(수동 확인 / API 재조회 / 자동 테스트)을 구분해 기록하며 진행했습니다.
