@@ -63,11 +63,17 @@ Company는 공유 기업 사전이 아니라 회원 개인이 등록한 회사 �
 
 > 재개 지점은 이 섹션 한 곳에만 적는다. `roadmap.md`에는 큰 순서만 두고 여기를 가리킨다. 갱신할 때는 아래 "지금 할 일"과 "남은 확인"만 고친다.
 
-[2026-11-21 Claude] 정리 (Codex 제안 반영)
+[2026-11-21 Claude] 갱신
 
-- **지금 할 일**: 사용자가 `MemberRepository.findByLoginId`의 반환형을 `String`에서 `Optional<Member>`로 직접 바꾸고 `import java.util.Optional;`을 추가한다. 이유: `ByLoginId`는 검색 조건일 뿐이고, 로그인에서는 회원 전체(저장된 해시 포함)를 꺼내 `passwordEncoder.matches(...)`로 비교해야 하며, 없는 아이디는 빈 결과로 받아야 한다. Codex 대화에서 설명했고, Codex 요청으로 Claude가 읽기 전용 리뷰에서 같은 결론을 냈다. 현재 코드는 아직 `String`이다.
+- **지금 할 일**: 로그인 서비스 작성. `findByLoginId`로 회원을 찾고, 없으면 실패 처리, 있으면 `passwordEncoder.matches(입력 비밀번호, 저장된 해시)`로 비교한다. 개념 설명 후 사용자가 직접 작성한다.
+- **그다음**: Spring Security 세션 로그인·로그아웃 연결.
+- **완료**: [2026-11-21 Claude] 사용자가 `findByLoginId` 반환형을 `Optional<Member>`로 직접 바꿨고, Claude가 검토하고 Java 17 컴파일 성공을 확인했다. 회원가입 컨트롤러·서비스와 함께 커밋했다(c0bed14, 3477363).
+
+[2026-11-21 Claude] 이전 정리 (Codex 제안 반영)
+
+- **(완료됨) 당시 할 일**: 사용자가 `MemberRepository.findByLoginId`의 반환형을 `String`에서 `Optional<Member>`로 직접 바꾸고 `import java.util.Optional;`을 추가한다. 이유: `ByLoginId`는 검색 조건일 뿐이고, 로그인에서는 회원 전체(저장된 해시 포함)를 꺼내 `passwordEncoder.matches(...)`로 비교해야 하며, 없는 아이디는 빈 결과로 받아야 한다. Codex 대화에서 설명했고, Codex 요청으로 Claude가 읽기 전용 리뷰에서 같은 결론을 냈다. 현재 코드는 아직 `String`이다.
 - **그다음**: 로그인 서비스에서 아이디 조회 → `matches`로 비밀번호 비교 → Spring Security 세션 로그인·로그아웃 순서로 작은 단계씩 진행한다.
-- **남은 확인**: 회원가입 컨트롤러·서비스 변경분이 아직 커밋되지 않았다(2026-11-21 Claude가 `git status`로 확인).
+- **(해결됨) 남은 확인**: 회원가입 컨트롤러·서비스 미커밋 → 2026-11-21 커밋 완료.
 - **완료된 것**: [2026-11-19 Codex 대화 기록] 사용자가 pgAdmin에서 `member` 테이블의 `hyungi_test` 행 password가 `$2a$10$…` BCrypt 해시로 저장된 것을 직접 확인했다. 아래 문단의 "DB 해시 확인" 예정 내용은 완료됐다.
 
 (이전 기록) 회원가입 API의 정상·중복·빈 입력 응답을 확인했다. 다음은 저장된 테스트 회원의 비밀번호가 원문이 아닌 BCrypt 해시인지 DB에서 확인하고, Spring Security 로그인·세션·로그아웃으로 이어간다. 개발 DB의 create 설정 때문에 서버 재시작은 데이터 초기화 영향을 먼저 확인한다. 사용자가 직접 작성하고 AI는 작은 단위로 설명·검토한다. Company 소유자 연결은 기존 데이터 처리 방안을 정한 뒤 진행한다.
