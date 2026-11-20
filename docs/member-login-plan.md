@@ -4,7 +4,7 @@
 
 검토일: 2026-11-19. 전체 순서·테스트·배포·후속 확장 기준은 [진행 계획](roadmap.md)을 따른다. 현재 순서는 완료한 회사 페이징 → 세션 기반 자체 로그인 → 회원별 기록 분리 → 검증·데이터 보존과 첫 배포 → 구글 소셜 로그인이다. 이 문서는 로그인 세부 설계다.
 
-상태: 사용자가 Member·MemberRepository·SignupRequestDto, MemberService.signUp의 중복 검사 → 비밀번호 해시 → 회원 저장, PasswordConfig의 BCryptPasswordEncoder 빈, 중복 아이디 예외와 409 처리 메서드를 작성했다. MemberApiController는 @RestController와 MemberService 주입까지 작성했다. AI의 설명·예시·코드 검토를 받으며 사용자가 직접 입력했다. 현재 Spring Security 의존성은 암호 처리 모듈이며 로그인 필터·세션 인증은 아직 연결하지 않았다. 회원가입 요청 매핑과 실제 가입·로그인 실행 검증은 다음 단계다.
+상태: 사용자가 회원 엔티티·DTO·리포지토리, 회원가입 서비스의 중복 검사·해시·저장, PasswordEncoder 빈, 중복 아이디 409 예외 처리를 작성했다. MemberApiController에 POST /api/members/signup, @Valid @RequestBody, 서비스 호출과 ResponseEntity<Void>의 201 응답까지 연결했다. AI의 설명·예시·코드 검토를 받으며 사용자가 직접 입력했다. 2026-11-19 실행 중인 서버에서 AI가 정상 가입 201·중복 409·빈 아이디와 빈 비밀번호 각각 400을 확인했다. 사용자가 DB에서 BCrypt 해시 저장을 확인했다. 로그인·세션 검증은 남아 있다. (수정: [2026-11-21 Claude], Codex 지적 반영)
 
 ## 목적과 우선순위
 
@@ -61,9 +61,26 @@ Company는 공유 기업 사전이 아니라 회원 개인이 등록한 회사 �
 
 ## 바로 다음 작업
 
-MemberApiController의 기본 틀은 작성했다. 다음 수업은 회원가입 요청을 받을 POST 주소와 메서드를 정하고, SignupRequestDto 수신·@Valid 검증·memberService.signUp 호출·성공 응답을 한 단계씩 연결한다. 주소와 메서드는 아직 작성하지 않았다. 이후 정상 가입·빈 입력·아이디 중복·비밀번호 해시 저장을 확인하고 Spring Security 로그인·세션·로그아웃으로 넘어간다. 개발 DB의 create 설정 때문에 서버 재시작은 데이터 초기화 영향을 먼저 확인한다. 사용자가 직접 작성하고 AI는 작은 단위로 설명·검토한다. Company 소유자 연결은 기존 데이터 처리 방안을 정한 뒤 진행한다.
+> 재개 지점은 이 섹션 한 곳에만 적는다. `roadmap.md`에는 큰 순서만 두고 여기를 가리킨다. 갱신할 때는 아래 "지금 할 일"과 "남은 확인"만 고친다.
+
+[2026-11-21 Claude] 정리 (Codex 제안 반영)
+
+- **지금 할 일**: 사용자가 `MemberRepository.findByLoginId`의 반환형을 `String`에서 `Optional<Member>`로 직접 바꾸고 `import java.util.Optional;`을 추가한다. 이유: `ByLoginId`는 검색 조건일 뿐이고, 로그인에서는 회원 전체(저장된 해시 포함)를 꺼내 `passwordEncoder.matches(...)`로 비교해야 하며, 없는 아이디는 빈 결과로 받아야 한다. Codex 대화에서 설명했고, Codex 요청으로 Claude가 읽기 전용 리뷰에서 같은 결론을 냈다. 현재 코드는 아직 `String`이다.
+- **그다음**: 로그인 서비스에서 아이디 조회 → `matches`로 비밀번호 비교 → Spring Security 세션 로그인·로그아웃 순서로 작은 단계씩 진행한다.
+- **남은 확인**: 회원가입 컨트롤러·서비스 변경분이 아직 커밋되지 않았다(2026-11-21 Claude가 `git status`로 확인).
+- **완료된 것**: [2026-11-19 Codex 대화 기록] 사용자가 pgAdmin에서 `member` 테이블의 `hyungi_test` 행 password가 `$2a$10$…` BCrypt 해시로 저장된 것을 직접 확인했다. 아래 문단의 "DB 해시 확인" 예정 내용은 완료됐다.
+
+(이전 기록) 회원가입 API의 정상·중복·빈 입력 응답을 확인했다. 다음은 저장된 테스트 회원의 비밀번호가 원문이 아닌 BCrypt 해시인지 DB에서 확인하고, Spring Security 로그인·세션·로그아웃으로 이어간다. 개발 DB의 create 설정 때문에 서버 재시작은 데이터 초기화 영향을 먼저 확인한다. 사용자가 직접 작성하고 AI는 작은 단위로 설명·검토한다. Company 소유자 연결은 기존 데이터 처리 방안을 정한 뒤 진행한다.
 
 ## 2026-11-19 학습 마무리
+
+### 커밋 이후 실제 회원가입 API 확인
+
+- 사용자가 서버를 실행한 뒤 AI가 localhost:8080에 POST 요청을 보냈다. 테스트 아이디는 signup_check_20261119_164232다. 테스트 회원 1건을 생성했으며 삭제하지 않았다.
+- 정상 가입: HTTP 201, 빈 응답 본문. 같은 아이디 재가입: HTTP 409, ‘이미 존재하는 아이디입니다.’
+- 공백 아이디: HTTP 400, ‘아이디를 입력하세요.’ 공백 비밀번호: HTTP 400, ‘비밀번호를 입력하세요.’
+- 비밀번호 해시 전달 코드는 확인했으나 DB 직접 조회는 접속 비밀번호가 없어 수행하지 못했다. 실제 저장 해시 조회·비밀번호 matches 검증과 로그인 성공을 확인한 것으로 표현하지 않는다.
+- 아래 커밋 전 테스트 기록은 이전 확인 범위다. 이번 실제 API 확인과 구분한다.
 
 - 학습한 흐름: 중복이면 throw로 가입 진행 중단 → @ExceptionHandler가 해당 예외 처리 → ErrorResponseDto와 HTTP 409 응답.
 - 비밀번호 원문을 DTO에서 덮어쓰지 않고 서비스에서 encode한 값을 toEntity(encodedPassword)에 전달한다.
