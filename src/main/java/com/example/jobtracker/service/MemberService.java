@@ -22,7 +22,7 @@ public class MemberService {
         if (isExist) {
             throw new DuplicateLoginIdException("이미 존재하는 아이디입니다.");
         }
-        String encodedPassword = passwordEncoder.encode(signupRequestDto.getPassword());
+        String encodedPassword = passwordEncoder.encode(signupRequestDto.getPassword());//패스워드를 해쉬값 변환함.
         Member member = signupRequestDto.toEntity(encodedPassword);
         memberRepository.save(member);
     }
