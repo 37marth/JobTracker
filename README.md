@@ -7,7 +7,7 @@
 
 ## 기술 스택
 
-Java 17 · Spring Boot 4.1.1 (Web MVC, Data JPA, Validation) · PostgreSQL · Mustache · Spring Security Crypto(BCrypt) · Lombok · Gradle
+Java 17 · Spring Boot 4.1.1 (Web MVC, Data JPA, Validation) · PostgreSQL · Mustache · Spring Security(BCrypt, 로그인 설정 진행 중) · Lombok · Gradle
 
 ## 주요 기능
 
@@ -65,6 +65,8 @@ Java 17 · Spring Boot 4.1.1 (Web MVC, Data JPA, Validation) · PostgreSQL · Mu
 2. 실행 환경변수에 `DB_PASSWORD`(postgres 계정 비밀번호)를 설정합니다. 접속 주소·계정은 `src/main/resources/application.properties`에서 바꿀 수 있습니다.
 3. `JobtrackerApplication`을 실행하고 `http://localhost:8080/`에 접속합니다.
 
+> 현재 보안 설정은 회원가입 POST의 비로그인 접근을 허용하고, 나머지 요청에는 로그인을 요구합니다. 로그인 화면 설정과 CSRF 토큰 연동이 진행 중이므로 홈 화면 접근과 회원가입 POST 실행에는 추가 설정이 필요합니다.
+
 > 현재는 개발 설정(`ddl-auto=create`)이라 **서버를 시작할 때마다 테이블이 초기화**되고 예시 회사 26개가 들어갑니다. 데이터를 유지하려면 로컬에서 `ddl-auto=update`, `spring.sql.init.mode=never`로 바꿉니다.
 
 ## 진행 상황과 다음 계획
@@ -79,6 +81,6 @@ Java 17 · Spring Boot 4.1.1 (Web MVC, Data JPA, Validation) · PostgreSQL · Mu
 
 ## 알려진 한계
 
-- 로그인 전이라 모든 데이터가 한 사람 기준으로 저장됩니다.
+- 회원별 데이터 분리는 구현 중이며, 회사·지원내역은 아직 공통 데이터로 관리됩니다.
 - 회사명 중복은 서비스에서 검사하며, DB 고유 제약은 아직 없습니다(동시 요청 중복은 미검증).
 - 자동 테스트는 오류 응답과 페이징 위주입니다. 회원 기능·실제 DB 제약 테스트는 추가 예정입니다.
